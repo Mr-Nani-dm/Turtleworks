@@ -26,15 +26,23 @@ export function ContactCTA() {
           </Reveal>
           <Reveal delay={260}>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button href={`mailto:${site.email}`} variant="primary">
-                Start a conversation
-              </Button>
-              <a
-                href={`mailto:${site.email}`}
-                className="text-sm text-mint underline-offset-4 hover:underline"
-              >
-                {site.email}
-              </a>
+              {site.email ? (
+                <>
+                  <Button href={"mailto:" + site.email} variant="primary">
+                    Start a conversation
+                  </Button>
+                  <a
+                    href={"mailto:" + site.email}
+                    className="text-sm text-mint underline-offset-4 hover:underline"
+                  >
+                    {site.email}
+                  </a>
+                </>
+              ) : (
+                <p className="max-w-xl text-sm leading-relaxed text-[color:color-mix(in_srgb,var(--color-ivory)_64%,transparent)]">
+                  Public contact details are being finalized before launch.
+                </p>
+              )}
             </div>
           </Reveal>
         </div>
