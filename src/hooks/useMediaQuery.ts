@@ -1,18 +1,22 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
-/** Live media-query match. Returns `serverValue` during SSR and hydration. */
-export function useMediaQuery(query: string, serverValue = false): boolean {
-  return useSyncExternalStore(
-    (onChange) => {
-      const mq = window.matchMedia(query);
-      mq.addEventListener("change", onChange);
-      return () => mq.removeEventListener("change", onChange);
+/** Reactive matchMedia hook with an explicit SSR/hydration snapshot. */
+export function useMediaQuery(query: string, serverSnapshot = false): boolean {
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      const media = window.matchMedia(query);
+      media.addEventListener("change", callback);
+      return () => media.removeEventListener("change", callback);
     },
-    () => window.matchMedia(query).matches,
-    () => serverValue,
+    [query],
   );
+
+  const getSnapshot = useCallback(() => window.matchMedia(query).matches, [query]);
+  const getServerSnapshot = useCallback(() => serverSnapshot, [serverSnapshot]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 const noopSubscribe = () => () => {};

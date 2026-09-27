@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/sections/Hero";
 import { CapabilityIndex } from "@/components/sections/CapabilityIndex";
+import { MoreToRight } from "@/components/sections/MoreToRight";
 import { ProcessTimeline } from "@/components/sections/ProcessTimeline";
 import { SelectedWork } from "@/components/sections/SelectedWork";
 import { Engagement } from "@/components/sections/Engagement";
@@ -22,6 +23,7 @@ export default function Home() {
       <main>
         <Hero />
         <CapabilityIndex />
+        <MoreToRight />
         <ProcessTimeline />
         <Engagement />
         <SelectedWork />
