@@ -35,16 +35,18 @@ export function Footer() {
 
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate">Contact</p>
-            <ul className="mt-5 flex flex-col gap-3">
-              <li>
+            <div className="mt-5">
+              {site.email ? (
                 <a
-                  href={`mailto:${site.email}`}
+                  href={"mailto:" + site.email}
                   className="text-sm text-[color:color-mix(in_srgb,var(--color-ivory)_78%,transparent)] hover:text-ivory"
                 >
                   {site.email}
                 </a>
-              </li>
-            </ul>
+              ) : (
+                <p className="text-sm text-slate">Contact details coming at launch.</p>
+              )}
+            </div>
           </div>
         </div>
 

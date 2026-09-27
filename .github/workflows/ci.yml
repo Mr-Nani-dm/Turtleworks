@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm start -- -H 127.0.0.1 -p 3000 > /tmp/turtleworks-next.log 2>&1 &
+          pid=$!
+          trap 'kill $pid || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl -fsS http://127.0.0.1:3000/ > /dev/null
+          curl -fsS http://127.0.0.1:3000/robots.txt > /dev/null
+          curl -fsS http://127.0.0.1:3000/sitemap.xml > /dev/null
+          curl -fsSI http://127.0.0.1:3000/videos/turtle-desktop.mp4 > /dev/null
