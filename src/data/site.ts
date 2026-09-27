@@ -26,7 +26,7 @@ export const site = {
     (vercelProductionUrl ? `https://${vercelProductionUrl}` : null) ??
     "https://turtleworks.in"
   ).replace(/\/+$/, ""),
-  email: clean(process.env.NEXT_PUBLIC_CONTACT_EMAIL),
+  email: clean(process.env.NEXT_PUBLIC_CONTACT_EMAIL) ?? "hello@turtleworks.in",
   bookingUrl: clean(process.env.NEXT_PUBLIC_BOOKING_URL),
   legalName: clean(process.env.NEXT_PUBLIC_LEGAL_NAME),
   location: clean(process.env.NEXT_PUBLIC_LOCATION),
