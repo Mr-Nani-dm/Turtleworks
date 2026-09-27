@@ -28,10 +28,8 @@ export const principles = [
 ] as const;
 
 export const heroVideo = {
-  desktop:
-    "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/6c4e943f-2d6b-43ba-90a5-dba804fbda2c.mp4",
-  mobile:
-    "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/e7c43a6f-c1ee-49d0-b2e4-b8d65ddc083f.mp4",
+  desktop: "/videos/turtle-desktop.mp4",
+  mobile: "/videos/turtle-mobile.mp4",
   poster: "/videos/poster.jpg",
   cdn: {
     master:
