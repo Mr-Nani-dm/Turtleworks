@@ -1,84 +1,86 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useScrollVideo } from "@/hooks/useScrollVideo";
 import { heroVideo } from "@/data/site";
 
-/**
- * Fixed, full-bleed cinematic background, visible across the whole site.
- * - Plays continuously and slowly (ambient loop), muted + playsInline.
- * - Uses the mobile asset on small screens, desktop asset otherwise.
- * - Reduced motion: static poster frame only (no playback).
- */
-const SLOW_RATE = 0.33;
+const MOBILE_RATE = 0.33;
 
+/**
+ * Fixed, full-bleed cinematic background.
+ * - Desktop: the 20s TurtleWorks narrative is scrubbed by page scroll.
+ * - Mobile: a lighter asset plays slowly/ambiently for stability.
+ * - Reduced motion: static poster only; the video element is never mounted.
+ */
 export function CinematicBackground() {
   const reduced = useReducedMotion();
+  const isMobile = useMediaQuery("(max-width: 767px)", true);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [play, setPlay] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setPlay(!reduced);
-    setIsMobile(!window.matchMedia("(min-width: 768px)").matches);
-  }, [reduced]);
+  const [readySrc, setReadySrc] = useState<string | null>(null);
 
   const src = isMobile ? heroVideo.mobile : heroVideo.desktop;
+  const ready = readySrc === src;
+  const scrollDriven = !reduced && !isMobile;
 
-  // Keep the slow, continuous playback going.
+  useScrollVideo(videoRef, {
+    enabled: scrollDriven && ready,
+    smoothing: 0.1,
+  });
+
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (!play) {
-      v.pause();
+    const video = videoRef.current;
+    if (!video || reduced || !isMobile) {
+      video?.pause();
       return;
     }
-    v.playbackRate = SLOW_RATE;
+
     const start = () => {
-      v.playbackRate = SLOW_RATE;
-      v.play().catch(() => {
-        /* autoplay may be blocked until interaction; poster remains */
+      video.playbackRate = MOBILE_RATE;
+      video.play().catch(() => {
+        // Autoplay can be blocked until interaction; the poster remains visible.
       });
     };
+
     start();
-    v.addEventListener("loadedmetadata", start);
-    return () => v.removeEventListener("loadedmetadata", start);
-  }, [play, src, ready]);
+    video.addEventListener("loadedmetadata", start);
+    return () => video.removeEventListener("loadedmetadata", start);
+  }, [isMobile, reduced, src]);
 
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden bg-abyss">
-      {play ? (
+      {!reduced ? (
         <video
           key={src}
           ref={videoRef}
-          className={`h-full w-full object-cover transition-opacity duration-1000 ${
-            ready ? "opacity-100" : "opacity-0"
-          }`}
+          className={
+            "h-full w-full object-cover transition-opacity duration-1000 " +
+            (ready ? "opacity-100" : "opacity-0")
+          }
           poster={heroVideo.poster}
           preload="auto"
-          autoPlay
+          autoPlay={isMobile}
           muted
-          loop
+          loop={isMobile}
           playsInline
           disablePictureInPicture
-          onLoadedData={() => setReady(true)}
-          onCanPlay={() => setReady(true)}
+          onLoadedData={() => setReadySrc(src)}
+          onCanPlay={() => setReadySrc(src)}
         >
           <source src={src} type="video/mp4" />
         </video>
       ) : null}
 
-      {/* Static poster fallback (reduced motion, or until the video is ready) */}
       <div
         aria-hidden
-        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
-          !play || !ready ? "opacity-100" : "opacity-0"
-        }`}
-        style={{ backgroundImage: `url(${heroVideo.poster})` }}
+        className={
+          "absolute inset-0 bg-cover bg-center transition-opacity duration-1000 " +
+          (reduced || !ready ? "opacity-100" : "opacity-0")
+        }
+        style={{ backgroundImage: "url(" + heroVideo.poster + ")" }}
       />
 
-      {/* Gentle, even contrast layer so text stays readable anywhere over the film. */}
       <div
         aria-hidden
         className="absolute inset-0"
