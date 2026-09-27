@@ -21,11 +21,6 @@ export function useIntersectionReveal<T extends HTMLElement = HTMLDivElement>({
     const node = ref.current;
     if (!node) return;
 
-    if (typeof IntersectionObserver === "undefined") {
-      setVisible(true);
-      return;
-    }
-
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {

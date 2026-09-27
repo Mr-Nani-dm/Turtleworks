@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { GoldMark } from "@/components/ui/GoldMark";
 import { Logo } from "./Logo";
-import { nav, site } from "@/data/site";
+import { legalLinks, nav, sectionHref, site } from "@/data/site";
+
+const linkClass =
+  "text-sm text-[color:color-mix(in_srgb,var(--color-ivory)_80%,transparent)] underline-offset-4 transition-colors hover:text-ivory hover:underline";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -9,50 +13,71 @@ export function Footer() {
   return (
     <footer className="section-solid relative">
       <Container className="py-16 md:py-20">
-        <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
-          <div>
-            <Logo />
-            <p className="mt-5 max-w-xs text-sm text-[color:color-mix(in_srgb,var(--color-ivory)_64%,transparent)]">
+        <div className="grid gap-12 sm:grid-cols-2 md:grid-cols-[1.4fr_1fr_1fr]">
+          <div className="sm:col-span-2 md:col-span-1">
+            <Link href="/" aria-label="TurtleWorks home" className="inline-block">
+              <Logo />
+            </Link>
+            <p className="mt-5 max-w-xs text-sm text-sage">
               {site.descriptor}. Small steps can create meaningful progress.
             </p>
           </div>
 
           <nav aria-label="Footer">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate">Navigate</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-sage">Navigate</p>
             <ul className="mt-5 flex flex-col gap-3">
               {nav.map((item) => (
-                <li key={item.href}>
-                  <a
-                    href={item.href}
-                    className="text-sm text-[color:color-mix(in_srgb,var(--color-ivory)_78%,transparent)] hover:text-ivory"
-                  >
+                <li key={item.id}>
+                  <Link href={sectionHref(item.id)} className={linkClass}>
                     {item.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
           </nav>
 
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate">Contact</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-sage">Get in touch</p>
             <ul className="mt-5 flex flex-col gap-3">
               <li>
-                <a
-                  href={`mailto:${site.email}`}
-                  className="text-sm text-[color:color-mix(in_srgb,var(--color-ivory)_78%,transparent)] hover:text-ivory"
-                >
-                  {site.email}
-                </a>
+                <Link href={sectionHref("contact")} className={linkClass}>
+                  Send an enquiry
+                </Link>
               </li>
+              {site.bookingUrl ? (
+                <li>
+                  <a href={site.bookingUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                    Book a call<span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                </li>
+              ) : null}
+              {site.email ? (
+                <li>
+                  <a href={`mailto:${site.email}`} className={`${linkClass} break-all`}>
+                    {site.email}
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col gap-4 border-t border-[rgba(220,235,228,0.1)] pt-6 text-xs text-slate sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            &copy; {year} {site.name}. All rights reserved.
-          </p>
-          <p className="flex items-center gap-2 text-[color:color-mix(in_srgb,var(--color-mint)_60%,transparent)]">
+        <div className="mt-14 flex flex-col gap-4 border-t border-[rgba(220,235,228,0.1)] pt-6 text-xs text-sage sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <p>
+              &copy; {year} {site.name}. All rights reserved.
+            </p>
+            <ul className="flex items-center gap-5">
+              {legalLinks.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="underline-offset-4 transition-colors hover:text-ivory hover:underline">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="flex items-center gap-2 text-[color:color-mix(in_srgb,var(--color-mint)_70%,transparent)]">
             <GoldMark size={16} />
             {site.tagline}
           </p>

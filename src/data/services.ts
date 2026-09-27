@@ -2,6 +2,8 @@ export type Service = {
   id: string;
   index: string;
   title: string;
+  /** Compact label for inline lists. */
+  short: string;
   summary: string;
   detail: string;
   outcomes: string[];
@@ -10,6 +12,7 @@ export type Service = {
 export const services: Service[] = [
   {
     id: "consulting",
+    short: "Consulting",
     index: "01",
     title: "Business & Technology Consulting",
     summary: "Understand the problem before naming a solution.",
@@ -19,6 +22,7 @@ export const services: Service[] = [
   },
   {
     id: "software",
+    short: "Custom software",
     index: "02",
     title: "Custom Software & Web Solutions",
     summary: "Practical systems built to be maintained.",
@@ -28,6 +32,7 @@ export const services: Service[] = [
   },
   {
     id: "automation",
+    short: "Automation",
     index: "03",
     title: "Automation & Systems Integration",
     summary: "Connect what you already run.",
@@ -37,6 +42,7 @@ export const services: Service[] = [
   },
   {
     id: "experience",
+    short: "Digital experience",
     index: "04",
     title: "Digital Experience",
     summary: "Interfaces people trust and understand.",
@@ -46,6 +52,7 @@ export const services: Service[] = [
   },
   {
     id: "growth",
+    short: "Search & growth",
     index: "05",
     title: "Search & Digital Growth",
     summary: "Visibility where it makes sense.",
@@ -55,6 +62,7 @@ export const services: Service[] = [
   },
   {
     id: "cloud",
+    short: "Cloud & cost",
     index: "06",
     title: "Cloud & Cost Visibility",
     summary: "Right-sized cloud, clear spend.",

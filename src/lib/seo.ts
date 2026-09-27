@@ -32,13 +32,13 @@ export const metadata: Metadata = {
     siteName: site.name,
     title,
     description: site.description,
-    images: [{ url: "/og.png", width: 1712, height: 963, alt: site.name }],
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "TurtleWorks — a turtle swimming through deep water" }],
   },
   twitter: {
     card: "summary_large_image",
     title,
     description: site.description,
-    images: ["/og.png"],
+    images: ["/og.jpg"],
   },
   robots: {
     index: true,
@@ -54,7 +54,8 @@ export function organizationJsonLd() {
     name: site.name,
     description: site.description,
     url: site.url,
-    email: site.email,
+    logo: `${site.url}/brand/turtleworks-mark.png`,
+    ...(site.email ? { email: site.email } : {}),
     slogan: site.tagline,
     knowsAbout: [
       "Business consulting",

@@ -43,8 +43,8 @@ export function CapabilityIndex() {
                       className="group flex w-full items-baseline gap-5 border-b border-[rgba(220,235,228,0.1)] py-5 text-left transition-colors"
                     >
                       <span
-                        className={`font-mono text-xs tabular-nums transition-colors ${
-                          isActive ? "text-amber" : "text-slate"
+                        className={`text-xs font-medium tabular-nums transition-colors ${
+                          isActive ? "text-amber" : "text-sage"
                         }`}
                       >
                         {service.index}
@@ -75,7 +75,7 @@ export function CapabilityIndex() {
           {/* Right: detail panel */}
           <div className="lg:sticky lg:top-28 lg:self-start">
             <div className="glass rounded-2xl p-8 md:p-10">
-              <span className="font-mono text-xs text-amber">{current.index}</span>
+              <span className="text-xs font-medium tabular-nums text-amber">{current.index}</span>
               <h3 className="mt-3 text-h3">{current.title}</h3>
               <p className="mt-2 text-sm text-mint">{current.summary}</p>
               <p className="mt-6 leading-relaxed text-[color:color-mix(in_srgb,var(--color-ivory)_78%,transparent)]">

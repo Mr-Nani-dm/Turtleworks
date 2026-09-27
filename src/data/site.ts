@@ -1,19 +1,49 @@
+/*
+  Site-wide configuration. Anything that must be real (domain, inbox, booking
+  link) comes from environment variables so production never ships a
+  placeholder. Unset optional values simply hide the UI that depends on them.
+
+  NEXT_PUBLIC_SITE_URL       canonical origin, e.g. https://turtleworks.co
+  NEXT_PUBLIC_CONTACT_EMAIL  public inbox shown as a direct-email option
+  NEXT_PUBLIC_BOOKING_URL    Cal.com / Calendly link for booking a call
+*/
+
+const clean = (value: string | undefined) => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+};
+
+const vercelProductionUrl = clean(process.env.VERCEL_PROJECT_PRODUCTION_URL);
+
 export const site = {
   name: "TurtleWorks",
   descriptor: "Business Solutions & Technology Partner",
   tagline: "Listen. Validate. Build With Purpose.",
-  url: "https://turtleworks.example",
-  email: "hello@turtleworks.example",
+  url: (
+    clean(process.env.NEXT_PUBLIC_SITE_URL) ??
+    (vercelProductionUrl ? `https://${vercelProductionUrl}` : null) ??
+    "https://turtleworks.vercel.app"
+  ).replace(/\/+$/, ""),
+  email: clean(process.env.NEXT_PUBLIC_CONTACT_EMAIL),
+  bookingUrl: clean(process.env.NEXT_PUBLIC_BOOKING_URL),
   description:
     "TurtleWorks is a business solutions and technology partner. We understand the problem first, then design the right mix of technology, automation, digital experience and business solutions around what you actually need.",
 } as const;
 
 export const nav = [
-  { label: "Solutions", href: "#solutions" },
-  { label: "How We Work", href: "#process" },
-  { label: "Work", href: "#work" },
-  { label: "Why Us", href: "#why" },
-  { label: "Contact", href: "#contact" },
+  { label: "Solutions", id: "solutions" },
+  { label: "How We Work", id: "process" },
+  { label: "Work", id: "work" },
+  { label: "Why Us", id: "why" },
+  { label: "Contact", id: "contact" },
+] as const;
+
+/** Links to a home-page section from any route. */
+export const sectionHref = (id: string) => `/#${id}`;
+
+export const legalLinks = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
 ] as const;
 
 export const principles = [
@@ -25,15 +55,15 @@ export const principles = [
   "Long-term thinking",
 ] as const;
 
-/** Cinematic hero sources. Self-hosted in /public with CDN originals noted. */
+/** Ambient film. WebM first (much smaller), MP4 for Safari/older browsers. */
 export const heroVideo = {
-  desktop: "/videos/turtle-desktop.mp4",
-  mobile: "/videos/turtle-mobile.mp4",
-  poster: "/videos/poster.jpg",
-  cdn: {
-    desktop:
-      "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/9e1443e2-6667-49b6-8521-1c9d0dba6fee.mp4",
-    mobile:
-      "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/9aaf1bd0-5d1c-4b0d-bd20-771ac31f9c77.mp4",
+  desktop: {
+    webm: "/videos/turtle-desktop.webm",
+    mp4: "/videos/turtle-desktop.mp4",
   },
+  mobile: {
+    webm: "/videos/turtle-mobile.webm",
+    mp4: "/videos/turtle-mobile.mp4",
+  },
+  poster: "/videos/poster.jpg",
 } as const;

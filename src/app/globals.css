@@ -16,6 +16,11 @@
   --color-slate: #53645d;
   --color-mint: #dcebe4;
   --color-amber: #c58a2e;
+  /* Secondary text on dark: sage tinted from the brand greens, ≥4.5:1 on the veil.
+     (Slate #53645D is too dark for text here; keep it for borders/fills only.) */
+  --color-sage: #9aaea5;
+  /* Form error hue: warm terracotta that sits with the palette, ≥4.5:1 on dark. */
+  --color-alert: #f2a488;
 
   /* Cinematic depths (hero video fallbacks) */
   --color-abyss: #050908;
@@ -59,7 +64,16 @@
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--nav-h) + 1rem);
     -webkit-text-size-adjust: 100%;
+    scrollbar-color: rgba(220, 235, 228, 0.28) var(--color-abyss);
+    scrollbar-width: thin;
+    accent-color: var(--color-amber);
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-amber);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -165,6 +179,52 @@
       color-mix(in srgb, var(--color-amber) 55%, transparent),
       transparent
     );
+  }
+
+  /* Reading typography for secondary pages (privacy, terms). */
+  .prose-tw {
+    color: color-mix(in srgb, var(--color-ivory) 84%, transparent);
+    line-height: 1.75;
+  }
+  .prose-tw > h2 {
+    margin-top: 3rem;
+    margin-bottom: 0.9rem;
+    font-size: 1.35rem;
+    color: var(--color-ivory);
+  }
+  .prose-tw > h2:first-child {
+    margin-top: 0;
+  }
+  .prose-tw > p + p,
+  .prose-tw > ul + p,
+  .prose-tw > p + ul {
+    margin-top: 1rem;
+  }
+  .prose-tw > ul {
+    display: grid;
+    gap: 0.4rem;
+    padding-left: 1.1rem;
+    list-style: none;
+  }
+  .prose-tw > ul > li {
+    position: relative;
+  }
+  .prose-tw > ul > li::before {
+    content: "";
+    position: absolute;
+    left: -1.1rem;
+    top: 0.72em;
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 999px;
+    background: var(--color-amber);
+  }
+  .prose-tw :where(p, li) a,
+  .page-intro a {
+    color: var(--color-ivory);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: color-mix(in srgb, var(--color-amber) 70%, transparent);
   }
 
   .reveal {

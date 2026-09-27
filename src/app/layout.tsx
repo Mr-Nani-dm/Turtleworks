@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { inter, manrope } from "@/lib/fonts";
 import { metadata as siteMetadata, organizationJsonLd } from "@/lib/seo";
@@ -32,6 +33,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }}
         />
+        {/* Cookie-free, aggregate analytics. Enable Web Analytics in the Vercel
+            dashboard first, then set NEXT_PUBLIC_ENABLE_ANALYTICS=1. */}
+        {process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "1" ? <Analytics /> : null}
       </body>
     </html>
   );
