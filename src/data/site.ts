@@ -12,7 +12,7 @@ export const nav = [
   { label: "Solutions", href: "#solutions" },
   { label: "How We Work", href: "#process" },
   { label: "Work", href: "#work" },
-  { label: "About", href: "#why" },
+  { label: "Why", href: "#why" },
 ] as const;
 
 export const principles = [

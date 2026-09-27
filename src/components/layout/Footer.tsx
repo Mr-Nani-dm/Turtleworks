@@ -17,7 +17,7 @@ export function Footer() {
           </div>
 
           <nav aria-label="Footer">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-slate">Navigate</h2>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate">Navigate</p>
             <ul className="mt-5 flex flex-col gap-3">
               {nav.map((item) => (
                 <li key={item.href}>
@@ -33,7 +33,7 @@ export function Footer() {
           </nav>
 
           <div>
-            <h2 className="text-xs uppercase tracking-[0.2em] text-slate">Contact</h2>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate">Contact</p>
             <ul className="mt-5 flex flex-col gap-3">
               <li>
                 <a
