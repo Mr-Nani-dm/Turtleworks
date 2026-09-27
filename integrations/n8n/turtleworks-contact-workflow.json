@@ -1,0 +1,62 @@
+{
+  "name": "TurtleWorks — Website enquiries",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "turtleworks-contact",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "7c1f3a52-2b7e-4d0a-9d61-0f4c8a6e1b01",
+      "name": "Website enquiry",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "b4e2d9c7-5a31-4f8e-a0c6-3d7f9e2b1a44"
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_YOUR_INBOX@example.com",
+        "subject": "=New enquiry — {{ $json.body.name }}{{ $json.body.company ? ' (' + $json.body.company + ')' : '' }}",
+        "emailType": "text",
+        "message": "=New enquiry from the TurtleWorks website\n\nName:     {{ $json.body.name }}\nEmail:    {{ $json.body.email }}\nCompany:  {{ $json.body.company || '—' }}\nSent:     {{ $json.body.submittedAt }}\nPage:     {{ $json.body.page }}\n\n— Message —\n{{ $json.body.message }}\n\nReply to: {{ $json.body.email }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "3e8b6f10-9c24-4a57-8e1d-6b2a7f4c9d02",
+      "name": "Email me",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [280, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"ok\": true }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a91d4c2e-6f73-4b08-b5e9-2c8d1f7a3e03",
+      "name": "Confirm to website",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [560, 0]
+    }
+  ],
+  "connections": {
+    "Website enquiry": {
+      "main": [[{ "node": "Email me", "type": "main", "index": 0 }]]
+    },
+    "Email me": {
+      "main": [[{ "node": "Confirm to website", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
