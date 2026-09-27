@@ -1,4 +1,5 @@
 import { Container } from "@/components/ui/Container";
+import { GoldMark } from "@/components/ui/GoldMark";
 import { Logo } from "./Logo";
 import { nav, site } from "@/data/site";
 
@@ -51,7 +52,8 @@ export function Footer() {
           <p>
             &copy; {year} {site.name}. All rights reserved.
           </p>
-          <p className="text-[color:color-mix(in_srgb,var(--color-mint)_60%,transparent)]">
+          <p className="flex items-center gap-2 text-[color:color-mix(in_srgb,var(--color-mint)_60%,transparent)]">
+            <GoldMark size={16} />
             {site.tagline}
           </p>
         </div>

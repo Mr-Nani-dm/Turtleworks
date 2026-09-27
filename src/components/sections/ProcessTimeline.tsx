@@ -1,4 +1,5 @@
 import { Container } from "@/components/ui/Container";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/motion/Reveal";
 import { processSteps } from "@/data/process";
 
@@ -7,7 +8,7 @@ export function ProcessTimeline() {
     <section id="process" className="section-solid relative py-28 md:py-36">
       <Container>
         <Reveal>
-          <p className="eyebrow">How we work</p>
+          <Eyebrow>How we work</Eyebrow>
           <h2 className="mt-5 max-w-3xl text-h2">
             A calm, deliberate way of moving a business forward.
           </h2>

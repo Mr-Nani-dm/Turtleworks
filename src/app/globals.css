@@ -158,10 +158,11 @@
     inset-inline: 0;
     top: 0;
     height: 1px;
+    /* Gold seam between sections — a quiet, recurring brand thread. */
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(220, 235, 228, 0.16),
+      color-mix(in srgb, var(--color-amber) 55%, transparent),
       transparent
     );
   }

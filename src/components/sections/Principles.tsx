@@ -1,4 +1,5 @@
 import { Container } from "@/components/ui/Container";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/motion/Reveal";
 import { principles } from "@/data/site";
 
@@ -8,7 +9,7 @@ export function Principles() {
       <Container>
         <div className="grid gap-14 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
           <Reveal>
-            <p className="eyebrow">Why TurtleWorks</p>
+            <Eyebrow>Why TurtleWorks</Eyebrow>
             <h2 className="mt-6 text-h1 font-semibold">
               Technology is useful only when it solves the right problem.
             </h2>

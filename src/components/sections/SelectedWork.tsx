@@ -1,4 +1,5 @@
 import { Container } from "@/components/ui/Container";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/motion/Reveal";
 import { workItems } from "@/data/work";
 
@@ -9,7 +10,7 @@ export function SelectedWork() {
         <Reveal>
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
-              <p className="eyebrow">Selected solutions</p>
+              <Eyebrow>Selected solutions</Eyebrow>
               <h2 className="mt-5 max-w-2xl text-h2">
                 Strong outcomes, told through the problem.
               </h2>

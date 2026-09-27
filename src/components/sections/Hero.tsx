@@ -1,5 +1,7 @@
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { GoldMark } from "@/components/ui/GoldMark";
 import { Reveal } from "@/components/motion/Reveal";
 
 export function Hero() {
@@ -10,8 +12,9 @@ export function Hero() {
     >
       <Container className="w-full">
         <div className="max-w-2xl">
-          <Reveal>
-            <p className="eyebrow">Business Solutions + Technology</p>
+          <Reveal className="flex items-center gap-4">
+            <GoldMark size={34} />
+            <Eyebrow>Business Solutions + Technology</Eyebrow>
           </Reveal>
 
           <Reveal delay={90}>

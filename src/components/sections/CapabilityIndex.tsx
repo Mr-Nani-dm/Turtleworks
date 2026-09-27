@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Container } from "@/components/ui/Container";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/motion/Reveal";
 import { services } from "@/data/services";
 
@@ -16,7 +17,7 @@ export function CapabilityIndex() {
           {/* Left: intro + index */}
           <div>
             <Reveal>
-              <p className="eyebrow">What we do</p>
+              <Eyebrow>What we do</Eyebrow>
               <h2 className="mt-5 text-h2">
                 Different problems.
                 <br />

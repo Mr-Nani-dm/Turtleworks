@@ -40,7 +40,7 @@ export function Navbar() {
           <Logo />
         </a>
 
-        <ul className="hidden items-center gap-9 md:flex">
+        <ul className="hidden items-center gap-7 lg:flex xl:gap-9">
           {nav.map((item) => (
             <li key={item.href}>
               <a
@@ -53,7 +53,7 @@ export function Navbar() {
           ))}
         </ul>
 
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <Button href="#contact" variant="ghost">
             Start a conversation
           </Button>
@@ -62,7 +62,7 @@ export function Navbar() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="relative z-50 flex h-10 w-10 items-center justify-center rounded-lg border border-[rgba(220,235,228,0.18)] md:hidden"
+          className="relative z-50 flex h-10 w-10 items-center justify-center rounded-lg border border-[rgba(220,235,228,0.18)] lg:hidden"
           aria-expanded={open}
           aria-controls="mobile-menu"
           aria-label={open ? "Close menu" : "Open menu"}
@@ -91,7 +91,7 @@ export function Navbar() {
       {/* Mobile menu */}
       <div
         id="mobile-menu"
-        className={`glass fixed inset-x-0 top-0 -z-10 origin-top px-[var(--spacing-gutter)] pb-10 pt-[calc(var(--nav-h)+1.5rem)] transition-[transform,opacity] duration-400 md:hidden ${
+        className={`glass fixed inset-x-0 top-0 -z-10 origin-top px-[var(--spacing-gutter)] pb-10 pt-[calc(var(--nav-h)+1.5rem)] transition-[transform,opacity] duration-400 lg:hidden ${
           open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-4 opacity-0"
         }`}
       >
