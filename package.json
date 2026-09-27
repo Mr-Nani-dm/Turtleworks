@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/sync-hero-videos.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/sync-hero-videos.mjs",
     "build": "next build",
+    "sync:hero": "node scripts/sync-hero-videos.mjs",
     "start": "next start",
     "lint": "eslint"
   },
