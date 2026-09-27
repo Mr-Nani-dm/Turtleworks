@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Logo } from "./Logo";
 import { Button } from "@/components/ui/Button";
 import { nav } from "@/data/site";
@@ -8,6 +8,7 @@ import { nav } from "@/data/site";
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -16,7 +17,6 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Lock body scroll while the mobile menu is open.
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => {
@@ -24,11 +24,26 @@ export function Navbar() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setOpen(false);
+      requestAnimationFrame(() => menuButtonRef.current?.focus());
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${
-        scrolled || open ? "glass" : "bg-transparent"
-      }`}
+      className={
+        "fixed inset-x-0 top-0 z-50 transition-colors duration-500 " +
+        (scrolled || open ? "glass" : "bg-transparent")
+      }
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <nav
@@ -60,8 +75,9 @@ export function Navbar() {
         </div>
 
         <button
+          ref={menuButtonRef}
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen((value) => !value)}
           className="relative z-50 flex h-10 w-10 items-center justify-center rounded-lg border border-[rgba(220,235,228,0.18)] lg:hidden"
           aria-expanded={open}
           aria-controls="mobile-menu"
@@ -70,30 +86,37 @@ export function Navbar() {
           <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
           <span aria-hidden className="relative block h-3.5 w-5">
             <span
-              className={`absolute left-0 block h-[1.5px] w-5 bg-ivory transition-all duration-300 ${
-                open ? "top-1.5 rotate-45" : "top-0"
-              }`}
+              className={
+                "absolute left-0 block h-[1.5px] w-5 bg-ivory transition-all duration-300 " +
+                (open ? "top-1.5 rotate-45" : "top-0")
+              }
             />
             <span
-              className={`absolute left-0 top-1.5 block h-[1.5px] w-5 bg-ivory transition-all duration-300 ${
-                open ? "opacity-0" : "opacity-100"
-              }`}
+              className={
+                "absolute left-0 top-1.5 block h-[1.5px] w-5 bg-ivory transition-all duration-300 " +
+                (open ? "opacity-0" : "opacity-100")
+              }
             />
             <span
-              className={`absolute left-0 block h-[1.5px] w-5 bg-ivory transition-all duration-300 ${
-                open ? "top-1.5 -rotate-45" : "top-3"
-              }`}
+              className={
+                "absolute left-0 block h-[1.5px] w-5 bg-ivory transition-all duration-300 " +
+                (open ? "top-1.5 -rotate-45" : "top-3")
+              }
             />
           </span>
         </button>
       </nav>
 
-      {/* Mobile menu */}
       <div
         id="mobile-menu"
-        className={`glass fixed inset-x-0 top-0 -z-10 origin-top px-[var(--spacing-gutter)] pb-10 pt-[calc(var(--nav-h)+1.5rem)] transition-[transform,opacity] duration-400 lg:hidden ${
-          open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-4 opacity-0"
-        }`}
+        inert={!open}
+        aria-hidden={!open}
+        className={
+          "glass fixed inset-x-0 top-0 -z-10 origin-top px-[var(--spacing-gutter)] pb-10 pt-[calc(var(--nav-h)+1.5rem)] transition-[transform,opacity] duration-400 lg:hidden " +
+          (open
+            ? "translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-4 opacity-0")
+        }
       >
         <ul className="flex flex-col gap-1">
           {nav.map((item) => (
