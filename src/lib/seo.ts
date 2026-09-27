@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { site } from "@/data/site";
 
-const title = `${site.name} — ${site.descriptor}`;
+const title = site.name + " — " + site.descriptor;
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
     default: title,
-    template: `%s — ${site.name}`,
+    template: "%s — " + site.name,
   },
   description: site.description,
   applicationName: site.name,
@@ -48,13 +48,12 @@ export const metadata: Metadata = {
 };
 
 export function organizationJsonLd() {
-  return {
+  const organization = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: site.name,
     description: site.description,
     url: site.url,
-    email: site.email,
     slogan: site.tagline,
     knowsAbout: [
       "Business consulting",
@@ -65,4 +64,6 @@ export function organizationJsonLd() {
       "Cloud and cost visibility",
     ],
   };
+
+  return site.email ? { ...organization, email: site.email } : organization;
 }
