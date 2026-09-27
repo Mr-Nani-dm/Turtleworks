@@ -1,9 +1,11 @@
+const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() ?? "";
+
 export const site = {
   name: "TurtleWorks",
   descriptor: "Business Solutions & Technology Partner",
   tagline: "Listen. Validate. Build With Purpose.",
-  url: "https://turtleworks.example",
-  email: "hello@turtleworks.example",
+  url: "https://turtleworks.in",
+  email: contactEmail,
   description:
     "TurtleWorks is a business solutions and technology partner. We understand the problem first, then design the right mix of technology, automation, digital experience and business solutions around what you actually need.",
 } as const;
@@ -25,7 +27,6 @@ export const principles = [
   "Long-term thinking",
 ] as const;
 
-/** Cinematic hero sources. Self-hosted in /public with CDN originals noted. */
 export const heroVideo = {
   desktop: "/videos/turtle-desktop.mp4",
   mobile: "/videos/turtle-mobile.mp4",
