@@ -28,13 +28,17 @@ export const principles = [
 ] as const;
 
 export const heroVideo = {
-  desktop: "/videos/turtle-desktop.mp4",
-  mobile: "/videos/turtle-mobile.mp4",
+  desktop:
+    "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/6c4e943f-2d6b-43ba-90a5-dba804fbda2c.mp4",
+  mobile:
+    "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/e7c43a6f-c1ee-49d0-b2e4-b8d65ddc083f.mp4",
   poster: "/videos/poster.jpg",
   cdn: {
+    master:
+      "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/4c06ec38-68d0-4389-8918-65bfa35d38be.mp4",
     desktop:
-      "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/9e1443e2-6667-49b6-8521-1c9d0dba6fee.mp4",
+      "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/6c4e943f-2d6b-43ba-90a5-dba804fbda2c.mp4",
     mobile:
-      "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/9aaf1bd0-5d1c-4b0d-bd20-771ac31f9c77.mp4",
+      "https://d2ol7oe51mr4n9.cloudfront.net/user_3J3Jy12MCj1kWrV3GOvjalBNbgg/e7c43a6f-c1ee-49d0-b2e4-b8d65ddc083f.mp4",
   },
 } as const;
