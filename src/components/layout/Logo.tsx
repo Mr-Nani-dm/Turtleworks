@@ -13,10 +13,10 @@ type LogoProps = {
  */
 export function Logo({ withWordmark = true, className = "" }: LogoProps) {
   return (
-    <span className={`inline-flex items-center gap-3 ${className}`}>
+    <span className={"inline-flex items-center gap-3 " + className}>
       <Image
         src={mark}
-        alt="TurtleWorks"
+        alt={withWordmark ? "" : "TurtleWorks"}
         width={40}
         height={40}
         priority
