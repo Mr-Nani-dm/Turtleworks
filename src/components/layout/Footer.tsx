@@ -5,7 +5,7 @@ import { Logo } from "./Logo";
 import { legalLinks, nav, sectionHref, site } from "@/data/site";
 
 const linkClass =
-  "text-sm text-[color:color-mix(in_srgb,var(--color-ivory)_80%,transparent)] underline-offset-4 transition-colors hover:text-ivory hover:underline";
+  "text-sm text-ivory-soft underline-offset-4 transition-colors hover:text-ivory hover:underline";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -65,7 +65,8 @@ export function Footer() {
         <div className="mt-14 flex flex-col gap-4 border-t border-[rgba(220,235,228,0.1)] pt-6 text-xs text-sage sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <p>
-              &copy; {year} {site.name}. All rights reserved.
+              &copy; {year} {site.legalName ?? site.name}. All rights reserved.
+              {site.location ? <> Based in {site.location}.</> : null}
             </p>
             <ul className="flex items-center gap-5">
               {legalLinks.map((l) => (
@@ -77,7 +78,7 @@ export function Footer() {
               ))}
             </ul>
           </div>
-          <p className="flex items-center gap-2 text-[color:color-mix(in_srgb,var(--color-mint)_70%,transparent)]">
+          <p className="flex items-center gap-2 text-sage">
             <GoldMark size={16} />
             {site.tagline}
           </p>

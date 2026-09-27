@@ -21,6 +21,10 @@
   --color-sage: #9aaea5;
   /* Form error hue: warm terracotta that sits with the palette, ≥4.5:1 on dark. */
   --color-alert: #f2a488;
+  /* Solid text tones. Transparent text over a moving film shimmers and its
+     contrast drifts frame to frame; these stay put. */
+  --color-ivory-soft: #d6d9d2;
+  --color-ivory-muted: #b4bbb4;
 
   /* Cinematic depths (hero video fallbacks) */
   --color-abyss: #050908;
@@ -68,6 +72,7 @@
     -webkit-text-size-adjust: 100%;
     scrollbar-color: rgba(220, 235, 228, 0.28) var(--color-abyss);
     scrollbar-width: thin;
+    scrollbar-gutter: stable;
     accent-color: var(--color-amber);
   }
 
@@ -100,13 +105,22 @@
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: -0.02em;
-    line-height: 1.02;
+    line-height: 1.1;
     text-wrap: balance;
   }
 
   ::selection {
     background: color-mix(in srgb, var(--color-amber) 85%, transparent);
     color: var(--color-abyss);
+    text-shadow: none;
+  }
+
+  input:-webkit-autofill,
+  textarea:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-ivory);
+    box-shadow: 0 0 0 100px #0b1a15 inset;
+    caret-color: var(--color-amber);
+    transition: background-color 9999s ease-out;
   }
 
   :focus-visible {
@@ -129,7 +143,7 @@
     font-weight: 600;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: color-mix(in srgb, var(--color-mint) 78%, transparent);
+    color: var(--color-mint);
   }
 
   .text-mega { font-size: var(--text-mega); }
@@ -227,23 +241,43 @@
     text-decoration-color: color-mix(in srgb, var(--color-amber) 70%, transparent);
   }
 
+  /* Scroll reveals hide content only when JS is confirmed running (html.js,
+     set inline in <head>). If hydration never happens, the class is removed
+     and everything shows. */
   .reveal {
-    opacity: 0;
-    transform: translateY(22px);
     transition:
       opacity 0.7s var(--ease-emphasis),
       transform 0.7s var(--ease-emphasis);
+  }
+  .js .reveal:not(.reveal--in) {
+    opacity: 0;
+    transform: translateY(22px);
     will-change: opacity, transform;
   }
-  .reveal--in {
-    opacity: 1;
-    transform: translateY(0);
+
+  /* Above-the-fold entrance: pure CSS, starts with first paint (no JS),
+     so the hero is never held hostage by hydration. */
+  .enter {
+    animation: enter 0.8s var(--ease-emphasis) both;
+    animation-delay: var(--enter-delay, 0ms);
   }
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(22px);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .reveal {
+    .js .reveal:not(.reveal--in) {
       opacity: 1;
       transform: none;
+    }
+    .reveal {
       transition: none;
+    }
+    .enter {
+      animation: none;
     }
   }
 

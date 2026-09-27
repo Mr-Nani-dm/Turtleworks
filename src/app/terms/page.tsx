@@ -1,17 +1,18 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { PageShell } from "@/components/layout/PageShell";
+import { pageMetadata } from "@/lib/seo";
 
 /*
   Website terms of use (not client engagement terms). Add governing law and
   registered business details for your jurisdiction, and have it reviewed.
 */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/terms",
   title: "Terms of use",
   description: "Terms for using the TurtleWorks website.",
-  alternates: { canonical: "/terms" },
-};
+});
 
 const UPDATED = "27 September 2026";
 

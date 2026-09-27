@@ -21,7 +21,7 @@ const FIELD_ORDER: ContactField[] = ["name", "email", "company", "message"];
 
 const inputClass = (invalid: boolean) =>
   "mt-2 block w-full rounded-xl border bg-[rgba(5,9,8,0.6)] px-4 py-3 text-base text-ivory " +
-  "placeholder:text-[color:color-mix(in_srgb,var(--color-sage)_75%,transparent)] " +
+  "placeholder:text-sage " +
   "transition-[border-color,box-shadow] duration-200 [text-shadow:none] " +
   "focus:outline-none focus:ring-2 " +
   (invalid
@@ -102,14 +102,14 @@ export function ContactForm({ email, bookingUrl }: Props) {
 
   if (status === "sent") {
     return (
-      <div className="rounded-2xl border border-[rgba(220,235,228,0.14)] bg-[rgba(8,19,15,0.55)] p-8 backdrop-blur-sm md:p-10">
+      <div className="rounded-2xl border border-[rgba(220,235,228,0.14)] bg-[rgba(8,19,15,0.78)] p-8 md:p-10">
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-amber text-abyss">
           <Check size={20} />
         </span>
         <h3 ref={successRef} tabIndex={-1} className="mt-6 font-display text-2xl text-ivory focus:outline-none">
           Thanks — your message is with us.
         </h3>
-        <p className="mt-3 max-w-md leading-relaxed text-[color:color-mix(in_srgb,var(--color-ivory)_80%,transparent)]">
+        <p className="mt-3 max-w-md leading-relaxed text-ivory-soft">
           We&rsquo;ll read it properly and reply personally to arrange a conversation.
         </p>
       </div>
@@ -134,9 +134,10 @@ export function ContactForm({ email, bookingUrl }: Props) {
       noValidate
       onSubmit={onSubmit}
       aria-describedby="contact-form-note"
-      className="rounded-2xl border border-[rgba(220,235,228,0.14)] bg-[rgba(8,19,15,0.55)] p-6 backdrop-blur-sm sm:p-8 md:p-10"
+      className="rounded-2xl border border-[rgba(220,235,228,0.14)] bg-[rgba(8,19,15,0.78)] p-6 sm:p-8 md:p-10"
     >
-      <div className="grid gap-6 sm:grid-cols-2">
+      <fieldset disabled={status === "sending"} className="grid gap-6 disabled:opacity-80 sm:grid-cols-2">
+        <legend className="sr-only">Your enquiry</legend>
         <div>
           <label htmlFor="name" className="text-sm font-medium text-ivory">
             Your name
@@ -222,7 +223,7 @@ export function ContactForm({ email, bookingUrl }: Props) {
           </p>
           {fieldError("message")}
         </div>
-      </div>
+      </fieldset>
 
       {/* Spam trap: invisible to people, tempting to bots. */}
       <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
@@ -233,7 +234,7 @@ export function ContactForm({ email, bookingUrl }: Props) {
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p id="contact-form-note" className="max-w-xs text-xs leading-relaxed text-sage">
           We use your details only to reply to this enquiry. See our{" "}
-          <Link href="/privacy" className="text-ivory underline underline-offset-4 hover:text-white">
+          <Link href="/privacy" className="text-ivory underline decoration-[color-mix(in_srgb,var(--color-amber)_70%,transparent)] underline-offset-4 hover:text-white">
             privacy notice
           </Link>
           .
@@ -269,13 +270,13 @@ export function ContactForm({ email, bookingUrl }: Props) {
               <p className="mt-2 text-sage">
                 You can also{" "}
                 {bookingUrl ? (
-                  <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="text-ivory underline underline-offset-4">
+                  <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="text-ivory underline decoration-[color-mix(in_srgb,var(--color-amber)_70%,transparent)] underline-offset-4">
                     book a call directly
                   </a>
                 ) : null}
                 {bookingUrl && email ? " or " : null}
                 {email ? (
-                  <a href={`mailto:${email}`} className="text-ivory underline underline-offset-4">
+                  <a href={`mailto:${email}`} className="text-ivory underline decoration-[color-mix(in_srgb,var(--color-amber)_70%,transparent)] underline-offset-4">
                     email {email}
                   </a>
                 ) : null}

@@ -6,6 +6,8 @@
   NEXT_PUBLIC_SITE_URL       canonical origin, e.g. https://turtleworks.co
   NEXT_PUBLIC_CONTACT_EMAIL  public inbox shown as a direct-email option
   NEXT_PUBLIC_BOOKING_URL    Cal.com / Calendly link for booking a call
+  NEXT_PUBLIC_LEGAL_NAME     registered / trading entity, e.g. "TurtleWorks Ltd"
+  NEXT_PUBLIC_LOCATION       where you operate from, e.g. "Hyderabad, India"
 */
 
 const clean = (value: string | undefined) => {
@@ -26,6 +28,8 @@ export const site = {
   ).replace(/\/+$/, ""),
   email: clean(process.env.NEXT_PUBLIC_CONTACT_EMAIL),
   bookingUrl: clean(process.env.NEXT_PUBLIC_BOOKING_URL),
+  legalName: clean(process.env.NEXT_PUBLIC_LEGAL_NAME),
+  location: clean(process.env.NEXT_PUBLIC_LOCATION),
   description:
     "TurtleWorks is a business solutions and technology partner. We understand the problem first, then design the right mix of technology, automation, digital experience and business solutions around what you actually need.",
 } as const;
@@ -33,7 +37,7 @@ export const site = {
 export const nav = [
   { label: "Solutions", id: "solutions" },
   { label: "How We Work", id: "process" },
-  { label: "Work", id: "work" },
+  { label: "Examples", id: "work" },
   { label: "Why Us", id: "why" },
   { label: "Contact", id: "contact" },
 ] as const;

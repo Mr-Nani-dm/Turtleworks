@@ -47,7 +47,7 @@ export const services: Service[] = [
     title: "Digital Experience",
     summary: "Interfaces people trust and understand.",
     detail:
-      "Considered UX and interface design that respects attention and communicates clearly — accessible, fast and consistent across every screen.",
+      "Considered UX and interface design that respects attention and communicates clearly — accessible, fast and consistent across the screens your users rely on.",
     outcomes: ["UX & UI design", "Design systems", "Accessibility"],
   },
   {

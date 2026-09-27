@@ -15,57 +15,66 @@ export function SelectedWork() {
               <Eyebrow>{illustrative ? "Engagement examples" : "Selected work"}</Eyebrow>
               <h2 className="mt-5 max-w-2xl text-h2">
                 {illustrative
-                  ? "What an engagement can look like."
+                  ? "Problems we're built to solve."
                   : "Outcomes, told through the problem."}
               </h2>
             </div>
             {illustrative ? (
-              <p className="max-w-xs text-sm text-sage">
-                Three typical shapes of work, described through the problem.
-                Client case studies appear here once approved for publication.
+              <p className="max-w-xs text-sm text-ivory-muted">
+                Typical situations and how we would approach them — not client
+                case studies. Those appear here once approved for publication.
               </p>
             ) : null}
           </div>
         </Reveal>
 
         <div className="mt-16 flex flex-col gap-5">
-          {workItems.map((item, i) => (
-            <Reveal key={item.id} delay={i * 80}>
-              <article className="group grid gap-8 rounded-2xl border border-[rgba(220,235,228,0.1)] bg-[rgba(8,19,15,0.5)] p-8 backdrop-blur-sm transition-colors hover:border-[rgba(197,138,46,0.4)] md:grid-cols-[minmax(9rem,auto)_1fr] md:p-10">
-                <div className="flex items-start gap-4 md:flex-col md:gap-2">
-                  <span className="text-sm font-medium tabular-nums text-amber">{item.index}</span>
-                  <span className="text-xs uppercase tracking-[0.2em] text-sage">
-                    {item.discipline}
-                  </span>
-                </div>
+          {workItems.map((item, i) => {
+            const rows: [string, string][] = item.placeholder
+              ? [
+                  ["The situation", item.problem],
+                  ["How we'd approach it", item.approach],
+                  ["What good looks like", item.outcome],
+                ]
+              : [
+                  ["Problem", item.problem],
+                  ["Approach", item.approach],
+                  ["Outcome", item.outcome],
+                ];
+            return (
+              <Reveal key={item.id} delay={i * 80}>
+                <article className="grid gap-8 rounded-2xl border border-[rgba(220,235,228,0.1)] bg-[rgba(8,19,15,0.72)] p-7 md:p-10 lg:grid-cols-[minmax(10rem,auto)_1fr]">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 lg:flex-col lg:items-start">
+                    <span className="text-sm font-medium tabular-nums text-amber">{item.index}</span>
+                    <span className="text-xs uppercase tracking-[0.2em] text-sage">
+                      {item.discipline}
+                    </span>
+                    {item.placeholder ? (
+                      <span className="rounded-full border border-[rgba(220,235,228,0.18)] px-2.5 py-0.5 text-xs text-ivory-muted">
+                        Illustrative
+                      </span>
+                    ) : null}
+                  </div>
 
-                <div className="min-w-0">
-                  <h3 className="text-h3">{item.title}</h3>
-                  <dl className="mt-6 grid gap-6 md:grid-cols-3">
-                    {[
-                      ["Problem", item.problem],
-                      ["Approach", item.approach],
-                      ["Outcome", item.outcome],
-                    ].map(([label, body]) => (
-                      <div key={label}>
-                        <dt className="text-xs uppercase tracking-[0.18em] text-mint">
-                          {label}
-                        </dt>
-                        <dd className="mt-2 text-sm leading-relaxed text-[color:color-mix(in_srgb,var(--color-ivory)_78%,transparent)]">
-                          {body}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                  {item.placeholder ? (
-                    <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-[rgba(220,235,228,0.14)] px-3 py-1 text-[0.7rem] uppercase tracking-[0.2em] text-sage">
-                      Illustrative example
-                    </p>
-                  ) : null}
-                </div>
-              </article>
-            </Reveal>
-          ))}
+                  <div className="min-w-0">
+                    <h3 className="text-h3">{item.title}</h3>
+                    <dl className="mt-6 grid gap-6 lg:grid-cols-3">
+                      {rows.map(([label, body]) => (
+                        <div key={label}>
+                          <dt className="text-xs uppercase tracking-[0.18em] text-mint">
+                            {label}
+                          </dt>
+                          <dd className="mt-2 text-[0.9375rem] leading-relaxed text-ivory-soft">
+                            {body}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                </article>
+              </Reveal>
+            );
+          })}
         </div>
       </Container>
     </section>

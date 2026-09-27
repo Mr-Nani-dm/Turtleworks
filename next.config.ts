@@ -2,20 +2,34 @@ import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === "production";
 const isPreview = process.env.VERCEL_ENV === "preview";
-const analytics = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "1";
 
 // Static-friendly CSP (no nonces), per Next.js "Without Nonces" guidance.
-// 'unsafe-inline' is required for Next's inline bootstrap scripts on static pages.
-const vercelLive = isPreview ? " https://vercel.live" : "";
+// 'unsafe-inline' is required for Next's inline bootstrap scripts on static
+// pages; inline event-handler attributes stay blocked (script-src-attr).
+// Vercel Web Analytics loads from this origin (/_vercel/insights), so it needs
+// nothing extra. Preview deployments also allow the Vercel toolbar.
+const toolbar = isPreview
+  ? {
+      script: " https://vercel.live",
+      style: " https://vercel.live",
+      img: " https://vercel.live https://vercel.com",
+      font: " https://vercel.live https://assets.vercel.com",
+      connect: " https://vercel.live wss://ws-us3.pusher.com",
+      frame: "https://vercel.live",
+    }
+  : { script: "", style: "", img: "", font: "", connect: "", frame: "'none'" };
+
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${analytics ? " https://va.vercel-scripts.com" : ""}${vercelLive}`,
-  "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob:${vercelLive}`,
-  `font-src 'self'${vercelLive}`,
+  `script-src 'self' 'unsafe-inline'${toolbar.script}`,
+  "script-src-attr 'none'",
+  `style-src 'self' 'unsafe-inline'${toolbar.style}`,
+  `img-src 'self' data: blob:${toolbar.img}`,
+  `font-src 'self'${toolbar.font}`,
   "media-src 'self'",
-  `connect-src 'self'${vercelLive}`,
-  `frame-src ${isPreview ? "https://vercel.live" : "'none'"}`,
+  `connect-src 'self'${toolbar.connect}`,
+  `frame-src ${toolbar.frame}`,
+  "manifest-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

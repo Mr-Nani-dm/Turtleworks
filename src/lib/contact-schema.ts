@@ -16,20 +16,31 @@ export const contactLimits = {
   message: 4000,
 } as const;
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const EMAIL_PATTERN = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 
-const text = (value: unknown) =>
-  typeof value === "string" ? value.replace(/\u0000/g, "").trim() : "";
+// Control and invisible format characters (incl. bidi overrides used to spoof
+// names and subjects). Single-line fields drop them all; the message keeps
+// line breaks and tabs.
+const INVISIBLE = /[\p{Cc}\p{Cf}]/gu;
+const INVISIBLE_EXCEPT_LINES = /[\p{Cf}\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/gu;
+
+const line = (value: unknown) =>
+  typeof value === "string" ? value.replace(INVISIBLE, " ").replace(/\s+/g, " ").trim() : "";
+
+const block = (value: unknown) =>
+  typeof value === "string"
+    ? value.replace(/\r\n?/g, "\n").replace(INVISIBLE_EXCEPT_LINES, "").trim()
+    : "";
 
 /** Shared by the form (instant feedback) and the API (source of truth). */
 export function validateContact(raw: Record<string, unknown>):
   | { ok: true; data: ContactInput }
   | { ok: false; errors: ContactErrors } {
   const data: ContactInput = {
-    name: text(raw.name),
-    email: text(raw.email).toLowerCase(),
-    company: text(raw.company),
-    message: text(raw.message),
+    name: line(raw.name),
+    email: line(raw.email).toLowerCase(),
+    company: line(raw.company),
+    message: block(raw.message),
   };
   const errors: ContactErrors = {};
 

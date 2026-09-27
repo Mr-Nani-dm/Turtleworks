@@ -14,17 +14,17 @@ type ButtonProps = {
 };
 
 const base =
-  "group inline-flex min-h-11 items-center gap-2.5 rounded-full px-6 py-3 text-sm font-medium " +
+  "group inline-flex min-h-11 items-center justify-center gap-2.5 rounded-full px-6 py-3 text-sm font-medium " +
   "transition-[transform,background-color,border-color,color] duration-300 ease-out " +
-  "hover:-translate-y-0.5 active:translate-y-0 " +
+  "hover:-translate-y-0.5 active:translate-y-0 active:opacity-85 " +
   "focus-visible:outline-2 focus-visible:outline-offset-3";
 
 const variants: Record<Variant, string> = {
   primary:
     "bg-ivory text-abyss [text-shadow:none] hover:bg-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_8px_24px_-12px_rgba(0,0,0,0.6)]",
   ghost:
-    "text-ivory border border-[rgba(220,235,228,0.22)] hover:border-amber " +
-    "hover:text-white bg-[rgba(8,19,15,0.35)] backdrop-blur-sm",
+    "text-ivory border border-[rgba(220,235,228,0.28)] bg-[rgba(8,19,15,0.6)] " +
+    "hover:border-amber hover:bg-[rgba(8,19,15,0.78)]",
 };
 
 export function Button({

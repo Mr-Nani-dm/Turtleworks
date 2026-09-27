@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { CinematicBackground } from "@/components/motion/CinematicBackground";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -11,6 +12,8 @@ import { Team } from "@/components/sections/Team";
 import { Faq } from "@/components/sections/Faq";
 import { ContactCTA } from "@/components/sections/ContactCTA";
 
+export const metadata = pageMetadata({ path: "/" });
+
 export default function Home() {
   return (
     <>
@@ -20,8 +23,8 @@ export default function Home() {
         <Hero />
         <CapabilityIndex />
         <ProcessTimeline />
-        <SelectedWork />
         <Engagement />
+        <SelectedWork />
         <Principles />
         <Team />
         <Faq />

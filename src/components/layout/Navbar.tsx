@@ -19,11 +19,10 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Highlight the section currently crossing the middle of the viewport.
+  // Track whichever section crosses the middle of the viewport. All sections
+  // are observed, so the underline clears over ones that aren't in the nav.
   useEffect(() => {
-    const sections = nav
-      .map((item) => document.getElementById(item.id))
-      .filter((el): el is HTMLElement => Boolean(el));
+    const sections = Array.from(document.querySelectorAll<HTMLElement>("main > section[id]"));
     if (!sections.length || typeof IntersectionObserver === "undefined") return;
 
     const observer = new IntersectionObserver(
@@ -90,7 +89,7 @@ export function Navbar() {
                   className={`relative py-2 text-sm transition-colors hover:text-ivory ${
                     isActive
                       ? "text-ivory"
-                      : "text-[color:color-mix(in_srgb,var(--color-ivory)_78%,transparent)]"
+                      : "text-ivory-soft"
                   }`}
                 >
                   {item.label}
@@ -142,6 +141,13 @@ export function Navbar() {
       </nav>
 
       <div
+        aria-hidden
+        onClick={() => setOpen(false)}
+        className={`fixed inset-0 -z-20 bg-black/50 transition-opacity duration-300 lg:hidden ${
+          open ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
+      <div
         id="mobile-menu"
         inert={!open}
         className={`glass fixed inset-x-0 top-0 -z-10 origin-top px-[var(--spacing-gutter)] pb-10 pt-[calc(var(--nav-h)+1.5rem)] transition-[transform,opacity] duration-300 lg:hidden ${
@@ -154,7 +160,7 @@ export function Navbar() {
               <Link
                 href={sectionHref(item.id)}
                 onClick={() => setOpen(false)}
-                className="block border-b border-[rgba(220,235,228,0.08)] py-4 font-display text-2xl text-ivory"
+                className="block border-b border-[rgba(220,235,228,0.08)] py-4 font-display text-2xl text-ivory active:opacity-70"
               >
                 {item.label}
               </Link>

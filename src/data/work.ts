@@ -11,33 +11,34 @@ export type WorkItem = {
 };
 
 /*
-  These are illustrative capability placeholders, NOT real client case studies.
-  No customer names, metrics, logos or results are invented. Replace `placeholder`
-  entries with approved case studies (problem / approach / outcome) when available.
+  Illustrative engagement shapes, NOT real client case studies. They are
+  written as "how we'd approach it", never as past delivery. No customer names,
+  metrics, logos or results. Replace with approved case studies (and set
+  placeholder: false) when available — then past tense is appropriate.
 */
 export const workItems: WorkItem[] = [
   {
     id: "operations-platform",
     index: "01",
     discipline: "Software · Automation",
-    title: "Operations platform",
+    title: "Operations spread across spreadsheets",
     problem:
-      "A growing team ran core operations across spreadsheets and disconnected tools, with no single source of truth.",
+      "A growing team runs core operations across spreadsheets and disconnected tools, with no single source of truth.",
     approach:
-      "We mapped the actual workflow, then built a focused internal platform that consolidated the critical steps and automated hand-offs.",
+      "Map the real workflow first, then consolidate the critical steps into one focused internal tool and automate the hand-offs.",
     outcome:
-      "One clear system of record, with manual re-entry removed from the highest-friction paths.",
+      "One clear system of record, with manual re-entry removed from the highest-friction steps.",
     placeholder: true,
   },
   {
     id: "digital-experience",
     index: "02",
     discipline: "Digital Experience · SEO",
-    title: "Customer-facing website",
+    title: "A website that undersells the business",
     problem:
-      "An established business needed a credible, accessible web presence that reflected the quality of its work.",
+      "An established business has a web presence that doesn't reflect the quality of its work or help buyers understand it.",
     approach:
-      "A right-sized site with a clean content model, technical SEO foundations and a maintainable component system.",
+      "A right-sized site with a clear content model, technical SEO foundations and components the team can maintain.",
     outcome:
       "A fast, accessible site the team can update confidently, built for the long term.",
     placeholder: true,
@@ -46,11 +47,11 @@ export const workItems: WorkItem[] = [
     id: "cloud-visibility",
     index: "03",
     discipline: "Cloud · Cost Visibility",
-    title: "Cloud cost visibility",
+    title: "Cloud spend nobody can explain",
     problem:
-      "Cloud spend had grown opaque, and the people accountable for it lacked a clear view of where it went.",
+      "Cloud costs have grown opaque, and the people accountable for them lack a clear view of where the money goes.",
     approach:
-      "We introduced practical cost visibility and right-sizing, aligning infrastructure to the actual workload.",
+      "Introduce practical cost visibility first, then right-size infrastructure to the actual workload.",
     outcome:
       "Spend that is legible and reviewable, with a repeatable practice rather than a one-off cleanup.",
     placeholder: true,

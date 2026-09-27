@@ -17,7 +17,7 @@ export function Principles() {
 
           <div className="lg:pt-4">
             <Reveal delay={120}>
-              <p className="max-w-md text-[color:color-mix(in_srgb,var(--color-ivory)_74%,transparent)]">
+              <p className="max-w-md text-ivory-soft">
                 We are practical by default: evidence over assumptions,
                 right-sized over impressive, maintainable over clever. The turtle
                 is deliberate — small steps, made with intent, that add up.

@@ -40,7 +40,7 @@ export const nextSteps = [
     body: "To arrange a conversation about your situation — not a sales sequence.",
   },
   {
-    title: "You get a clear recommendation",
-    body: "What we would do, what we would not, and why.",
+    title: "We agree the right first step",
+    body: "Sometimes that's a short discovery, sometimes something smaller. Nothing is committed until you've agreed what it involves.",
   },
 ] as const;

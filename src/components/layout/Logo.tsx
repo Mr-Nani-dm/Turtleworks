@@ -19,7 +19,6 @@ export function Logo({ withWordmark = true, className = "" }: LogoProps) {
         alt="TurtleWorks"
         width={40}
         height={40}
-        priority
         className="h-9 w-9 rounded-lg bg-ivory object-cover ring-1 ring-[rgba(220,235,228,0.15)]"
       />
       {withWordmark ? (

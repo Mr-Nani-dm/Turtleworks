@@ -1,5 +1,6 @@
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/motion/Reveal";
 import { ContactForm } from "./ContactForm";
 import { nextSteps } from "@/data/engagement";
@@ -22,23 +23,23 @@ export function ContactCTA() {
     <section
       id="contact"
       aria-labelledby="contact-title"
-      className="relative py-28 md:py-40"
+      className="section-solid relative py-32 md:py-44"
     >
       <Container>
         <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
           <div>
             <Reveal>
-              <div className="hairline w-24" />
-              <h2 id="contact-title" className="mt-8 text-h1 font-semibold">
+              <Eyebrow>Contact</Eyebrow>
+              <h2 id="contact-title" className="mt-5 text-h1 font-semibold">
                 Have a problem worth solving?
               </h2>
-              <p className="mt-5 text-xl text-[color:color-mix(in_srgb,var(--color-ivory)_84%,transparent)]">
+              <p className="mt-5 text-xl text-ivory-soft">
                 Let&rsquo;s understand it first.
               </p>
             </Reveal>
 
             <Reveal delay={100}>
-              <h3 className="mt-12 text-xs font-medium uppercase tracking-[0.2em] text-mint">
+              <h3 className="eyebrow mt-12">
                 What happens next
               </h3>
               <ol className="mt-5 space-y-5">
@@ -49,7 +50,7 @@ export function ContactCTA() {
                     </span>
                     <div>
                       <p className="font-medium text-ivory">{step.title}</p>
-                      <p className="mt-1 text-sm leading-relaxed text-[color:color-mix(in_srgb,var(--color-ivory)_76%,transparent)]">
+                      <p className="mt-1 text-[0.9375rem] leading-relaxed text-ivory-soft">
                         {step.body}
                       </p>
                     </div>
@@ -87,7 +88,7 @@ export function ContactCTA() {
                 <h3 className="font-display text-2xl text-ivory">
                   Online enquiries open shortly.
                 </h3>
-                <p className="mt-3 leading-relaxed text-[color:color-mix(in_srgb,var(--color-ivory)_80%,transparent)]">
+                <p className="mt-3 leading-relaxed text-ivory-soft">
                   {site.bookingUrl || site.email
                     ? "In the meantime, please use the options alongside to reach us."
                     : "Please check back soon."}

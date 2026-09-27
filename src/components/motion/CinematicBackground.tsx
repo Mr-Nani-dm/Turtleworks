@@ -11,7 +11,8 @@ import { Pause, Play } from "@/components/ui/Icons";
  * - Plays continuously and slowly (ambient loop), muted + playsInline.
  * - Visitors can pause it (WCAG 2.2.2); the choice is remembered.
  * - Pauses while the tab is hidden to save battery and CPU.
- * - Reduced motion: static poster only, no playback and no control.
+ * - Reduced motion or Data Saver: static poster only, nothing downloaded.
+ * - The control steps aside while the contact form is on screen.
  */
 const SLOW_RATE = 0.33;
 const PREF_KEY = "tw-film-paused";
@@ -49,12 +50,17 @@ let memoryPaused = false;
 export function CinematicBackground() {
   const isClient = useIsClient();
   const reduced = useReducedMotion();
-  const isDesktop = useMediaQuery("(min-width: 768px)", true);
+  // Landscape phones are wide but short: they get the lighter mobile file.
+  const isDesktop = useMediaQuery("(min-width: 768px) and (min-height: 560px)");
   const userPaused = useSyncExternalStore(pausePref.subscribe, pausePref.get, () => false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [readySrc, setReadySrc] = useState<string | null>(null);
+  const [nearForm, setNearForm] = useState(false);
 
-  const enabled = isClient && !reduced;
+  const saveData =
+    isClient &&
+    (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+  const enabled = isClient && !reduced && !saveData;
   const sources = isDesktop ? heroVideo.desktop : heroVideo.mobile;
   const ready = readySrc === sources.mp4;
 
@@ -83,6 +89,16 @@ export function CinematicBackground() {
     };
   }, [enabled, sync, sources]);
 
+  useEffect(() => {
+    const contact = document.getElementById("contact");
+    if (!enabled || !contact) return;
+    const observer = new IntersectionObserver(([entry]) => setNearForm(entry.isIntersecting), {
+      rootMargin: "0px 0px -20% 0px",
+    });
+    observer.observe(contact);
+    return () => observer.disconnect();
+  }, [enabled]);
+
   return (
     <>
       <div className="fixed inset-0 -z-10 overflow-hidden bg-abyss" aria-hidden>
@@ -93,8 +109,7 @@ export function CinematicBackground() {
             className={`h-full w-full object-cover transition-opacity duration-1000 ${
               ready ? "opacity-100" : "opacity-0"
             }`}
-            poster={heroVideo.poster}
-            preload="auto"
+            preload={userPaused ? "none" : "auto"}
             autoPlay={!userPaused}
             muted
             loop
@@ -135,7 +150,11 @@ export function CinematicBackground() {
           aria-pressed={userPaused}
           aria-label={userPaused ? "Play background video" : "Pause background video"}
           title={userPaused ? "Play background video" : "Pause background video"}
-          className="glass fixed z-40 flex h-11 w-11 items-center justify-center rounded-full text-ivory transition-colors hover:border-amber hover:text-white"
+          tabIndex={nearForm ? -1 : 0}
+          aria-hidden={nearForm || undefined}
+          className={`fixed z-40 flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(220,235,228,0.2)] bg-[rgba(5,9,8,0.82)] text-ivory transition-[opacity,border-color] duration-300 hover:border-amber active:opacity-80 ${
+            nearForm ? "pointer-events-none opacity-0" : "opacity-100"
+          }`}
           style={{
             right: "max(1rem, env(safe-area-inset-right))",
             bottom: "max(1rem, env(safe-area-inset-bottom))",

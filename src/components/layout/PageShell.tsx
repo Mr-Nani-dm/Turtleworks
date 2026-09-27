@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { Container } from "@/components/ui/Container";
-import { ArrowRight } from "@/components/ui/Icons";
+import { ArrowLeft } from "@/components/ui/Icons";
 import { Logo } from "./Logo";
 import { Footer } from "./Footer";
 
@@ -23,9 +23,9 @@ export function PageShell({ title, intro, updated, children }: PageShellProps) {
           </Link>
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center gap-2 text-sm text-[color:color-mix(in_srgb,var(--color-ivory)_80%,transparent)] transition-colors hover:text-ivory"
+            className="inline-flex min-h-11 items-center gap-2 text-sm text-ivory-soft transition-colors hover:text-ivory"
           >
-            Back to home <ArrowRight size={14} />
+            <ArrowLeft size={14} /> Back to home
           </Link>
         </Container>
       </header>
@@ -37,7 +37,7 @@ export function PageShell({ title, intro, updated, children }: PageShellProps) {
             <h1 className="mt-8 text-h1 font-semibold">{title}</h1>
             {updated ? <p className="mt-4 text-sm text-sage">Last updated {updated}</p> : null}
             {intro ? (
-              <div className="page-intro mt-6 text-lg leading-relaxed text-[color:color-mix(in_srgb,var(--color-ivory)_84%,transparent)]">
+              <div className="page-intro mt-6 text-lg leading-relaxed text-ivory-soft">
                 {intro}
               </div>
             ) : null}

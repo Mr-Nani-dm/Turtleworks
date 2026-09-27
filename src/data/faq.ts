@@ -19,7 +19,7 @@ export const faqs: Faq[] = [
   {
     question: "How do you price work?",
     answer:
-      "Work is scoped after discovery, against agreed outcomes and acceptance criteria. We don't sell predefined packages, because the right solution depends on the problem.",
+      "Discovery is scoped and agreed with you before it starts. Delivery is then scoped against agreed outcomes and acceptance criteria. We don't sell predefined packages, because the right solution depends on the problem.",
   },
   {
     question: "Will we own what you build?",
@@ -34,6 +34,6 @@ export const faqs: Faq[] = [
   {
     question: "Do you support things after launch?",
     answer:
-      "Yes. Improvement is part of how we work: we measure what matters after launch and improve over time, rather than handing over and disappearing.",
+      "Ongoing improvement can be agreed as part of an engagement: measuring what matters after launch and improving in small steps. It's scoped like everything else.",
   },
 ];

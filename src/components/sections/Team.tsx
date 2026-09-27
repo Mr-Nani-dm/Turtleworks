@@ -37,7 +37,7 @@ export function Team() {
               ) : null}
               <h3 className="mt-6 font-display text-2xl text-ivory">{person.name}</h3>
               <p className="mt-1 text-sm text-mint">{person.role}</p>
-              <p className="mt-4 max-w-[48ch] text-sm leading-relaxed text-[color:color-mix(in_srgb,var(--color-ivory)_80%,transparent)]">
+              <p className="mt-4 max-w-[48ch] text-sm leading-relaxed text-ivory-soft">
                 {person.bio}
               </p>
               {person.linkedin ? (

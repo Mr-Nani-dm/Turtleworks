@@ -5,7 +5,6 @@ import { GoldMark } from "@/components/ui/GoldMark";
 
 export const metadata: Metadata = {
   title: "Page not found",
-  robots: { index: false, follow: true },
 };
 
 export default function NotFound() {

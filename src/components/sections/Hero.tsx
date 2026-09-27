@@ -1,9 +1,18 @@
+import { CSSProperties, ReactNode } from "react";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { GoldMark } from "@/components/ui/GoldMark";
-import { Reveal } from "@/components/motion/Reveal";
 import { services } from "@/data/services";
+
+/** CSS-only entrance: paints with the first frame, no hydration needed (LCP-safe). */
+function Enter({ delay = 0, className = "", children }: { delay?: number; className?: string; children: ReactNode }) {
+  return (
+    <div className={`enter ${className}`} style={{ "--enter-delay": `${delay}ms` } as CSSProperties}>
+      {children}
+    </div>
+  );
+}
 
 export function Hero() {
   return (
@@ -13,28 +22,28 @@ export function Hero() {
     >
       <Container className="w-full">
         <div className="max-w-2xl">
-          <Reveal className="flex items-center gap-4">
+          <Enter className="flex items-center gap-4">
             <GoldMark size={34} />
             <Eyebrow>Business Solutions + Technology</Eyebrow>
-          </Reveal>
+          </Enter>
 
-          <Reveal delay={90}>
+          <Enter delay={60}>
             <h1 className="mt-6 text-mega font-semibold leading-[0.98]">
               Small steps.
               <br />
               <span className="text-mint">Bigger possibilities.</span>
             </h1>
-          </Reveal>
+          </Enter>
 
-          <Reveal delay={180}>
-            <p className="mt-7 max-w-xl text-lg leading-relaxed text-[color:color-mix(in_srgb,var(--color-ivory)_82%,transparent)]">
+          <Enter delay={140}>
+            <p className="mt-7 max-w-xl text-lg leading-relaxed text-ivory-soft">
               We understand the problem first, then design the right mix of
               technology, automation, digital experience and business solutions
               around what you actually need.
             </p>
-          </Reveal>
+          </Enter>
 
-          <Reveal delay={280}>
+          <Enter delay={220}>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button href="#solutions" variant="primary">
                 Explore what we do
@@ -43,12 +52,12 @@ export function Hero() {
                 Start a conversation
               </Button>
             </div>
-          </Reveal>
+          </Enter>
 
-          <Reveal delay={380}>
+          <Enter delay={300}>
             <ul
               aria-label="What we do"
-              className="mt-10 flex max-w-xl flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[color:color-mix(in_srgb,var(--color-ivory)_72%,transparent)]"
+              className="mt-10 flex max-w-xl flex-wrap items-center gap-x-3 gap-y-2 text-sm text-ivory-muted"
             >
               {services.map((s, i) => (
                 <li key={s.id} className="flex items-center gap-3">
@@ -59,20 +68,19 @@ export function Hero() {
                 </li>
               ))}
             </ul>
-          </Reveal>
+          </Enter>
         </div>
       </Container>
 
-      {/* Scroll cue */}
-      <Reveal
+      <Enter
         delay={500}
         className="pointer-events-none absolute bottom-7 left-1/2 hidden -translate-x-1/2 md:block [@media(max-height:860px)]:hidden"
       >
-        <span className="flex flex-col items-center gap-2 text-[0.7rem] uppercase tracking-[0.28em] text-[color:color-mix(in_srgb,var(--color-mint)_60%,transparent)]">
+        <span aria-hidden className="flex flex-col items-center gap-2 text-xs uppercase tracking-[0.28em] text-sage">
           Scroll
           <span className="h-9 w-px bg-gradient-to-b from-[rgba(220,235,228,0.5)] to-transparent" />
         </span>
-      </Reveal>
+      </Enter>
     </section>
   );
 }

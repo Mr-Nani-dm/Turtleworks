@@ -1,51 +1,83 @@
 import type { Metadata } from "next";
 import { site } from "@/data/site";
 
-const title = `${site.name} — ${site.descriptor}`;
+const defaultTitle = `${site.name} — ${site.descriptor}`;
+const ogImage = {
+  url: "/og.jpg",
+  width: 1200,
+  height: 630,
+  alt: "TurtleWorks — a turtle swimming through deep water",
+};
 
+/*
+  Next.js merges metadata shallowly: a page that sets `openGraph` replaces the
+  layout's whole object. So the layout holds no page-specific URL or
+  canonical, and every indexable page builds its own via `pageMetadata`.
+*/
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: {
-    default: title,
-    template: `%s — ${site.name}`,
-  },
+  title: { default: defaultTitle, template: `%s — ${site.name}` },
   description: site.description,
   applicationName: site.name,
-  keywords: [
-    "business solutions",
-    "technology partner",
-    "custom software",
-    "automation",
-    "systems integration",
-    "digital experience",
-    "SEO",
-    "cloud",
-    "Azure",
-    "FinOps",
-  ],
   authors: [{ name: site.name }],
   creator: site.name,
-  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    url: site.url,
     siteName: site.name,
-    title,
+    title: defaultTitle,
     description: site.description,
-    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "TurtleWorks — a turtle swimming through deep water" }],
+    images: [ogImage],
   },
   twitter: {
     card: "summary_large_image",
-    title,
+    title: defaultTitle,
     description: site.description,
-    images: ["/og.jpg"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+    images: [ogImage.url],
   },
 };
+
+// Indexing directives live on indexable pages only, so the 404 and
+// confirmation pages never inherit a conflicting "index, follow".
+const indexable: Metadata["robots"] = {
+  index: true,
+  follow: true,
+  googleBot: { index: true, follow: true, "max-image-preview": "large" },
+};
+
+export function pageMetadata({
+  path,
+  title,
+  description = site.description,
+}: {
+  path: string;
+  title?: string;
+  description?: string;
+}): Metadata {
+  const fullTitle = title ? `${title} — ${site.name}` : defaultTitle;
+  return {
+    ...(title ? { title } : {}),
+    description,
+    alternates: { canonical: path },
+    robots: indexable,
+    openGraph: {
+      type: "website",
+      siteName: site.name,
+      url: path,
+      title: fullTitle,
+      description,
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description,
+      images: [ogImage.url],
+    },
+  };
+}
+
+/** Serialises structured data safely for a <script> tag (per Next.js JSON-LD guide). */
+export const jsonLd = (data: unknown) => JSON.stringify(data).replace(/</g, "\\u003c");
 
 export function organizationJsonLd() {
   return {
@@ -56,6 +88,8 @@ export function organizationJsonLd() {
     url: site.url,
     logo: `${site.url}/brand/turtleworks-mark.png`,
     ...(site.email ? { email: site.email } : {}),
+    ...(site.legalName ? { legalName: site.legalName } : {}),
+    ...(site.location ? { location: { "@type": "Place", name: site.location } } : {}),
     slogan: site.tagline,
     knowsAbout: [
       "Business consulting",

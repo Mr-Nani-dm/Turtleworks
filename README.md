@@ -31,9 +31,13 @@ npm run build   # production build
 | `NEXT_PUBLIC_SITE_URL` | recommended | Canonical origin (defaults to the Vercel production URL) |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | optional | Shows a direct-email option |
 | `NEXT_PUBLIC_BOOKING_URL` | optional | Cal.com / Calendly link — shows "Book a call" |
+| `NEXT_PUBLIC_LEGAL_NAME` | recommended | Registered/trading entity — footer, privacy notice, JSON-LD |
+| `NEXT_PUBLIC_LOCATION` | recommended | Where you operate from, e.g. "Hyderabad, India" |
 | `NEXT_PUBLIC_ENABLE_ANALYTICS` | optional | `1` to load Vercel Web Analytics (enable it in the dashboard first) |
 
-**Until a delivery option is set, the enquiry form stays hidden in production** so no message is ever lost. Redeploy after changing variables.
+**Until a delivery option is set, the enquiry form stays hidden in production** so no message is ever lost. Pages are static, so **redeploy after changing any variable**.
+
+**Spam protection:** the API has a honeypot, a minimum fill time, same-origin checks, a 20 KB body cap and a per-instance rate limit. For real flood protection add a Vercel Firewall rule: *Project → Firewall → Add rule → path `/api/contact`, method POST → Rate limit (e.g. 5 requests / 10 min per IP)*.
 
 ## What's here
 
@@ -64,7 +68,8 @@ src/
   lib/            seo · fonts · contact-schema · contact-delivery
 public/
   videos/         turtle-{desktop,mobile}.{webm,mp4} · poster.jpg
-  brand/          turtleworks-mark.png · turtle-keyart.png
+  brand/          turtleworks-mark.png
+  og.jpg          1200×630 social preview
 ```
 
 ## Notes
