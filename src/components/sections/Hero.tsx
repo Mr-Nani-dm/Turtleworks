@@ -20,7 +20,14 @@ export function Hero() {
       id="top"
       className="relative flex min-h-[100svh] items-center pb-16 pt-[calc(var(--nav-h)+1.5rem)] md:pb-20"
     >
-      <Container className="w-full">
+      {/* Local scrim behind the copy: uniform on small screens (the film's
+          bright centre sits behind the text there), a soft pool on desktop
+          that fades out before the turtle. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[rgba(5,9,8,0.52)] lg:bg-transparent lg:bg-[radial-gradient(ellipse_62%_78%_at_24%_52%,rgba(5,9,8,0.74),rgba(5,9,8,0.36)_58%,transparent_82%)]"
+      />
+      <Container className="relative w-full">
         <div className="max-w-2xl">
           <Enter className="flex items-center gap-4">
             <GoldMark size={34} />

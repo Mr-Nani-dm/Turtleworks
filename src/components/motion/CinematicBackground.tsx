@@ -47,20 +47,50 @@ const pausePref = {
 };
 let memoryPaused = false;
 
-export function CinematicBackground() {
+const usePaused = () => useSyncExternalStore(pausePref.subscribe, pausePref.get, () => false);
+
+/** True when the film actually plays (client, motion allowed, no Data Saver). */
+function useFilmEnabled() {
   const isClient = useIsClient();
   const reduced = useReducedMotion();
-  // Landscape phones are wide but short: they get the lighter mobile file.
-  const isDesktop = useMediaQuery("(min-width: 768px) and (min-height: 560px)");
-  const userPaused = useSyncExternalStore(pausePref.subscribe, pausePref.get, () => false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [readySrc, setReadySrc] = useState<string | null>(null);
-  const [nearForm, setNearForm] = useState(false);
-
   const saveData =
     isClient &&
     (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
-  const enabled = isClient && !reduced && !saveData;
+  return isClient && !reduced && !saveData;
+}
+
+const LABEL = "Pause background video";
+
+/** Text alternative to the floating control (e.g. in the footer). */
+export function FilmToggle({ className = "" }: { className?: string }) {
+  const enabled = useFilmEnabled();
+  const paused = usePaused();
+  if (!enabled) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => pausePref.set(!paused)}
+      aria-pressed={paused}
+      className={`inline-flex min-h-11 items-center gap-2 underline-offset-4 transition-colors hover:text-ivory hover:underline ${className}`}
+    >
+      {paused ? <Play size={14} /> : <Pause size={14} />}
+      {LABEL}
+    </button>
+  );
+}
+
+export function CinematicBackground() {
+  const enabled = useFilmEnabled();
+  // Landscape phones are wide but short: they get the lighter mobile file.
+  const isDesktop = useMediaQuery("(min-width: 768px) and (min-height: 560px)");
+  const userPaused = usePaused();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [readySrc, setReadySrc] = useState<string | null>(null);
+  const [nearForm, setNearForm] = useState(false);
+  const [controlFocused, setControlFocused] = useState(false);
+  // Steps aside over the contact form so it can't cover the submit button,
+  // but never while it has keyboard focus.
+  const tucked = nearForm && !controlFocused;
   const sources = isDesktop ? heroVideo.desktop : heroVideo.mobile;
   const ready = readySrc === sources.mp4;
 
@@ -147,13 +177,16 @@ export function CinematicBackground() {
         <button
           type="button"
           onClick={() => pausePref.set(!userPaused)}
+          onFocus={() => setControlFocused(true)}
+          onBlur={() => setControlFocused(false)}
+          data-film-toggle
           aria-pressed={userPaused}
-          aria-label={userPaused ? "Play background video" : "Pause background video"}
-          title={userPaused ? "Play background video" : "Pause background video"}
-          tabIndex={nearForm ? -1 : 0}
-          aria-hidden={nearForm || undefined}
+          aria-label={LABEL}
+          title={userPaused ? "Play background video" : LABEL}
+          tabIndex={tucked ? -1 : 0}
+          aria-hidden={tucked || undefined}
           className={`fixed z-40 flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(220,235,228,0.2)] bg-[rgba(5,9,8,0.82)] text-ivory transition-[opacity,border-color] duration-300 hover:border-amber active:opacity-80 ${
-            nearForm ? "pointer-events-none opacity-0" : "opacity-100"
+            tucked ? "pointer-events-none opacity-0" : "opacity-100"
           }`}
           style={{
             right: "max(1rem, env(safe-area-inset-right))",

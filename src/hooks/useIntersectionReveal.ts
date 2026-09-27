@@ -10,7 +10,7 @@ type Options = {
 
 /** Reveals an element the first time it scrolls into view. */
 export function useIntersectionReveal<T extends HTMLElement = HTMLDivElement>({
-  threshold = 0.18,
+  threshold = 0,
   rootMargin = "0px 0px -10% 0px",
   once = true,
 }: Options = {}) {
@@ -35,8 +35,15 @@ export function useIntersectionReveal<T extends HTMLElement = HTMLDivElement>({
       { threshold, rootMargin },
     );
 
+    // Keyboard users can reach content before it scrolls into the trigger zone.
+    const onFocus = () => setVisible(true);
+    node.addEventListener("focusin", onFocus);
+
     observer.observe(node);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      node.removeEventListener("focusin", onFocus);
+    };
   }, [threshold, rootMargin, once]);
 
   return { ref, visible };

@@ -11,7 +11,7 @@ function ServiceDetail({ service, compact = false }: { service: Service; compact
     <>
       {compact ? null : (
         <>
-          <span className="text-xs font-medium tabular-nums text-amber">{service.index}</span>
+          <span className="text-xs font-medium tabular-nums text-gold">{service.index}</span>
           <h3 className="mt-3 text-h3">{service.title}</h3>
           <p className="mt-2 text-sm text-mint">{service.summary}</p>
         </>
@@ -32,12 +32,15 @@ function ServiceDetail({ service, compact = false }: { service: Service; compact
 }
 
 /*
-  Every service's full description is server-rendered (indexable, and readable
-  without JS). Desktop: hover or select a row to show it in the sticky panel.
-  Touch / narrow: the selected row expands inline, right where it was tapped.
+  Every service's full description is in the server-rendered HTML (indexable).
+  Selecting a row (click / tap / Enter) sets aria-expanded and, on narrow
+  screens, expands the detail inline where it was tapped. On desktop, hovering
+  only previews in the sticky panel — a visual aid that never changes state.
 */
 export function CapabilityIndex() {
   const [active, setActive] = useState(0);
+  const [preview, setPreview] = useState<number | null>(null);
+  const shown = preview ?? (active >= 0 ? active : 0);
 
   return (
     <section id="solutions" className="section-solid relative py-28 md:py-36">
@@ -56,22 +59,29 @@ export function CapabilityIndex() {
               </p>
             </Reveal>
 
-            <ul className="mt-12 border-t border-[rgba(220,235,228,0.1)]">
+            <ul
+              className="mt-12 border-t border-[rgba(220,235,228,0.1)]"
+              onMouseLeave={() => setPreview(null)}
+            >
               {services.map((service, i) => {
                 const isActive = i === active;
+                const isShown = i === shown;
                 return (
                   <li key={service.id} className="border-b border-[rgba(220,235,228,0.1)]">
                     <button
                       type="button"
-                      onMouseEnter={() => setActive(i)}
-                      onClick={() => setActive(i)}
+                      onMouseEnter={() => setPreview(i)}
+                      onClick={() => {
+                        setPreview(null);
+                        setActive(isActive ? -1 : i);
+                      }}
                       aria-expanded={isActive}
                       aria-controls={`svc-inline-${service.id} svc-panel-${service.id}`}
                       className="group flex min-h-11 w-full items-baseline gap-5 py-5 text-left transition-colors active:opacity-80"
                     >
                       <span
                         className={`text-xs font-medium tabular-nums transition-colors ${
-                          isActive ? "text-amber" : "text-sage"
+                          isShown ? "text-gold" : "text-sage"
                         }`}
                       >
                         {service.index}
@@ -79,7 +89,7 @@ export function CapabilityIndex() {
                       <span className="flex-1">
                         <span
                           className={`block font-display text-xl transition-colors md:text-2xl ${
-                            isActive ? "text-ivory" : "text-ivory-muted group-hover:text-ivory"
+                            isShown ? "text-ivory" : "text-ivory-muted group-hover:text-ivory"
                           }`}
                         >
                           {service.title}
@@ -108,7 +118,7 @@ export function CapabilityIndex() {
                 <div
                   key={service.id}
                   id={`svc-panel-${service.id}`}
-                  hidden={i !== active}
+                  hidden={i !== shown}
                 >
                   <ServiceDetail service={service} />
                 </div>

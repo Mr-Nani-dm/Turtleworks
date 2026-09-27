@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "./Logo";
 import { Button } from "@/components/ui/Button";
-import { nav, sectionHref } from "@/data/site";
+import { SectionLink } from "@/components/ui/SectionLink";
+import { nav } from "@/data/site";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -45,10 +45,18 @@ export function Navbar() {
     };
   }, []);
 
-  // Mobile menu: lock scroll, close on Escape, return focus to the toggle.
+  // Mobile menu is modal: lock scroll, make the page behind it inert,
+  // close on Escape and return focus to the toggle.
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
     if (!open) return;
+    document.body.style.overflow = "hidden";
+    const behind = [
+      document.querySelector("main"),
+      document.querySelector("footer"),
+      document.querySelector("[data-film-toggle]"),
+    ].filter((el): el is Element => Boolean(el));
+    behind.forEach((el) => el.setAttribute("inert", ""));
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
@@ -58,14 +66,19 @@ export function Navbar() {
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
+      behind.forEach((el) => el.removeAttribute("inert"));
       window.removeEventListener("keydown", onKey);
     };
   }, [open]);
 
+  const close = () => setOpen(false);
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${
-        scrolled || open ? "glass" : "bg-transparent"
+        scrolled || open
+          ? "glass"
+          : "bg-gradient-to-b from-[rgba(5,9,8,0.82)] via-[rgba(5,9,8,0.5)] to-transparent"
       }`}
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
@@ -74,39 +87,37 @@ export function Navbar() {
         style={{ height: "var(--nav-h)" }}
         aria-label="Primary"
       >
-        <Link href="/#top" className="shrink-0" aria-label="TurtleWorks home">
+        <SectionLink id="top" className="shrink-0" aria-label="TurtleWorks home">
           <Logo />
-        </Link>
+        </SectionLink>
 
         <ul className="hidden items-center gap-7 lg:flex xl:gap-9">
           {nav.map((item) => {
             const isActive = active === item.id;
             return (
               <li key={item.id}>
-                <Link
-                  href={sectionHref(item.id)}
+                <SectionLink
+                  id={item.id}
                   aria-current={isActive ? "location" : undefined}
-                  className={`relative py-2 text-sm transition-colors hover:text-ivory ${
-                    isActive
-                      ? "text-ivory"
-                      : "text-ivory-soft"
+                  className={`relative inline-flex min-h-11 items-center text-sm transition-colors hover:text-ivory ${
+                    isActive ? "text-ivory" : "text-ivory-soft"
                   }`}
                 >
                   {item.label}
                   <span
                     aria-hidden
-                    className={`absolute inset-x-0 -bottom-0.5 h-px origin-left bg-amber transition-transform duration-500 ease-out ${
+                    className={`absolute inset-x-0 bottom-2 h-px origin-left bg-amber transition-transform duration-500 ease-out ${
                       isActive ? "scale-x-100" : "scale-x-0"
                     }`}
                   />
-                </Link>
+                </SectionLink>
               </li>
             );
           })}
         </ul>
 
         <div className="hidden lg:block">
-          <Button href={sectionHref("contact")} variant="ghost">
+          <Button href="#contact" variant="ghost">
             Start a conversation
           </Button>
         </div>
@@ -115,7 +126,7 @@ export function Navbar() {
           ref={toggleRef}
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="relative z-50 flex h-11 w-11 items-center justify-center rounded-lg border border-[rgba(220,235,228,0.18)] lg:hidden"
+          className="relative z-50 flex h-11 w-11 items-center justify-center rounded-lg border border-[rgba(220,235,228,0.24)] active:opacity-80 lg:hidden"
           aria-expanded={open}
           aria-controls="mobile-menu"
           aria-label={open ? "Close menu" : "Open menu"}
@@ -142,7 +153,7 @@ export function Navbar() {
 
       <div
         aria-hidden
-        onClick={() => setOpen(false)}
+        onClick={close}
         className={`fixed inset-0 -z-20 bg-black/50 transition-opacity duration-300 lg:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
@@ -157,21 +168,23 @@ export function Navbar() {
         <ul className="flex flex-col gap-1">
           {nav.map((item) => (
             <li key={item.id}>
-              <Link
-                href={sectionHref(item.id)}
-                onClick={() => setOpen(false)}
+              <SectionLink
+                id={item.id}
+                onNavigate={close}
                 className="block border-b border-[rgba(220,235,228,0.08)] py-4 font-display text-2xl text-ivory active:opacity-70"
               >
                 {item.label}
-              </Link>
+              </SectionLink>
             </li>
           ))}
         </ul>
-        <div className="mt-8" onClick={() => setOpen(false)}>
-          <Button href={sectionHref("contact")} variant="primary" className="w-full justify-center">
-            Start a conversation
-          </Button>
-        </div>
+        <SectionLink
+          id="contact"
+          onNavigate={close}
+          className="mt-8 flex min-h-11 w-full items-center justify-center gap-2.5 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-abyss [text-shadow:none] active:opacity-85"
+        >
+          Start a conversation
+        </SectionLink>
       </div>
     </header>
   );

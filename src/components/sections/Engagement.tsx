@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { ArrowRight } from "@/components/ui/Icons";
+import { SectionLink } from "@/components/ui/SectionLink";
 import { Reveal } from "@/components/motion/Reveal";
 import { engagementModels } from "@/data/engagement";
 
@@ -30,7 +30,7 @@ export function Engagement() {
               <li key={model.name}>
                 <div className="flex items-center gap-3">
                   <span aria-hidden className="h-px w-10 bg-amber" />
-                  <span className="text-xs font-medium tabular-nums text-amber">
+                  <span className="text-xs font-medium tabular-nums text-gold">
                     Stage {i + 1}
                   </span>
                 </div>
@@ -52,19 +52,19 @@ export function Engagement() {
               conversation is for.
             </p>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-              <Link
-                href="/#faq"
+              <SectionLink
+                id="faq"
                 className="inline-flex min-h-11 items-center text-sm text-ivory-muted underline-offset-4 transition-colors hover:text-ivory hover:underline"
               >
                 How pricing works
-              </Link>
-              <Link
-                href="/#contact"
+              </SectionLink>
+              <SectionLink
+                id="contact"
                 className="group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-ivory underline decoration-[color-mix(in_srgb,var(--color-amber)_70%,transparent)] underline-offset-4 active:opacity-80"
               >
                 Describe your problem
                 <ArrowRight className="transition-transform duration-300 group-hover:translate-x-0.5" />
-              </Link>
+              </SectionLink>
             </div>
           </div>
         </Reveal>

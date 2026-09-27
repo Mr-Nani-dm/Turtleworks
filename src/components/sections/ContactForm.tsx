@@ -23,10 +23,9 @@ const inputClass = (invalid: boolean) =>
   "mt-2 block w-full rounded-xl border bg-[rgba(5,9,8,0.6)] px-4 py-3 text-base text-ivory " +
   "placeholder:text-sage " +
   "transition-[border-color,box-shadow] duration-200 [text-shadow:none] " +
-  "focus:outline-none focus:ring-2 " +
   (invalid
-    ? "border-alert focus:border-alert focus:ring-[rgba(242,164,136,0.35)]"
-    : "border-[rgba(220,235,228,0.18)] hover:border-[rgba(220,235,228,0.3)] focus:border-amber focus:ring-[rgba(197,138,46,0.35)]");
+    ? "border-alert"
+    : "border-[rgba(220,235,228,0.42)] hover:border-[rgba(220,235,228,0.6)] focus:border-amber");
 
 export function ContactForm({ email, bookingUrl }: Props) {
   const [status, setStatus] = useState<Status>("idle");
@@ -36,6 +35,20 @@ export function ContactForm({ email, bookingUrl }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const startedAt = useRef(0);
   const successRef = useRef<HTMLHeadingElement>(null);
+  const problemRef = useRef<HTMLDivElement>(null);
+  // Focus moves after React commits, so fields are announced with their errors.
+  const [focusRequest, setFocusRequest] = useState<{ target: ContactField | "problem"; n: number } | null>(null);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    if (focusRequest.target === "problem") problemRef.current?.focus();
+    else formRef.current?.querySelector<HTMLElement>(`[name="${focusRequest.target}"]`)?.focus();
+  }, [focusRequest]);
+
+  const focusFirstError = (errs: ContactErrors) => {
+    const first = FIELD_ORDER.find((field) => errs[field]);
+    if (first) setFocusRequest({ target: first, n: Date.now() });
+  };
 
   useEffect(() => {
     startedAt.current = Date.now();
@@ -62,8 +75,7 @@ export function ContactForm({ email, bookingUrl }: Props) {
     if (!result.ok) {
       setErrors(result.errors);
       setProblem(null);
-      const first = FIELD_ORDER.find((f) => result.errors[f]);
-      if (first) formRef.current?.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+      focusFirstError(result.errors);
       return;
     }
 
@@ -87,6 +99,8 @@ export function ContactForm({ email, bookingUrl }: Props) {
       if (res.status === 400 && body.errors) {
         setErrors(body.errors);
         setProblem("Please check the highlighted fields.");
+        focusFirstError(body.errors);
+        return;
       } else if (res.status === 429) {
         setProblem("You've sent several messages in a short time. Please wait a few minutes and try again.");
       } else if (res.status === 503) {
@@ -94,9 +108,11 @@ export function ContactForm({ email, bookingUrl }: Props) {
       } else {
         setProblem("Something went wrong on our side and your message wasn't sent. Your text is still here — please try again.");
       }
+      setFocusRequest({ target: "problem", n: Date.now() });
     } catch {
       setStatus("error");
       setProblem("We couldn't reach the server. Check your connection and try again — your text is still here.");
+      setFocusRequest({ target: "problem", n: Date.now() });
     }
   };
 
@@ -136,7 +152,7 @@ export function ContactForm({ email, bookingUrl }: Props) {
       aria-describedby="contact-form-note"
       className="rounded-2xl border border-[rgba(220,235,228,0.14)] bg-[rgba(8,19,15,0.78)] p-6 sm:p-8 md:p-10"
     >
-      <fieldset disabled={status === "sending"} className="grid gap-6 disabled:opacity-80 sm:grid-cols-2">
+      <fieldset className="grid gap-6 sm:grid-cols-2">
         <legend className="sr-only">Your enquiry</legend>
         <div>
           <label htmlFor="name" className="text-sm font-medium text-ivory">
@@ -241,9 +257,8 @@ export function ContactForm({ email, bookingUrl }: Props) {
         </p>
         <button
           type="submit"
-          disabled={status === "sending"}
           aria-disabled={status === "sending"}
-          className="group inline-flex min-h-11 items-center justify-center gap-2.5 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-abyss [text-shadow:none] transition-[transform,background-color,opacity] duration-300 hover:-translate-y-0.5 hover:bg-white disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0"
+          className="group inline-flex min-h-11 items-center justify-center gap-2.5 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-abyss [text-shadow:none] transition-[transform,background-color,opacity] duration-300 hover:-translate-y-0.5 hover:bg-white aria-disabled:cursor-wait aria-disabled:opacity-70 aria-disabled:hover:translate-y-0"
         >
           {status === "sending" ? (
             <>
@@ -262,9 +277,13 @@ export function ContactForm({ email, bookingUrl }: Props) {
         </button>
       </div>
 
-      <div role="status" aria-live="polite" className="empty:hidden">
+      <div role="status" aria-live="polite">
         {problem ? (
-          <div className="mt-6 rounded-xl border border-[rgba(242,164,136,0.4)] bg-[rgba(242,164,136,0.08)] p-4 text-sm leading-relaxed text-ivory">
+          <div
+            ref={problemRef}
+            tabIndex={-1}
+            className="mt-6 rounded-xl border border-[rgba(242,164,136,0.4)] bg-[rgba(242,164,136,0.08)] p-4 text-sm leading-relaxed text-ivory"
+          >
             <p>{problem}</p>
             {status === "error" && (bookingUrl || email) ? (
               <p className="mt-2 text-sage">

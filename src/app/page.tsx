@@ -30,7 +30,7 @@ export default function Home() {
         <Faq />
         <ContactCTA />
       </main>
-      <Footer />
+      <Footer onHome />
     </>
   );
 }

@@ -27,7 +27,7 @@ export function ProcessTimeline() {
               className="flex flex-col bg-[rgba(8,19,15,0.72)] p-7 last:sm:col-span-2 last:xl:col-span-1"
             >
               <div className="flex items-center gap-3">
-                <span className="text-xs font-medium tabular-nums text-amber">{step.index}</span>
+                <span className="text-xs font-medium tabular-nums text-gold">{step.index}</span>
                 <span className="h-px flex-1 bg-[rgba(220,235,228,0.14)]" />
               </div>
               <h3 className="mt-5 font-display text-xl text-ivory">{step.title}</h3>

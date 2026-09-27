@@ -45,7 +45,7 @@ export function ContactCTA() {
               <ol className="mt-5 space-y-5">
                 {nextSteps.map((step, i) => (
                   <li key={step.title} className="flex gap-4">
-                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[rgba(197,138,46,0.55)] text-xs font-medium tabular-nums text-amber">
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[rgba(197,138,46,0.55)] text-xs font-medium tabular-nums text-gold">
                       {i + 1}
                     </span>
                     <div>

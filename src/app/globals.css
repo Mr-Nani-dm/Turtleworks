@@ -18,9 +18,12 @@
   --color-amber: #c58a2e;
   /* Secondary text on dark: sage tinted from the brand greens, ≥4.5:1 on the veil.
      (Slate #53645D is too dark for text here; keep it for borders/fills only.) */
-  --color-sage: #9aaea5;
+  --color-sage: #adbfb6;
   /* Form error hue: warm terracotta that sits with the palette, ≥4.5:1 on dark. */
   --color-alert: #f2a488;
+  /* Gold for small text: the brand amber is too dark for 12–14px type over
+     bright frames of the film. Same hue, lifted. Amber stays for lines/icons. */
+  --color-gold: #e0a852;
   /* Solid text tones. Transparent text over a moving film shimmers and its
      contrast drifts frame to frame; these stay put. */
   --color-ivory-soft: #d6d9d2;
@@ -123,10 +126,17 @@
     transition: background-color 9999s ease-out;
   }
 
+  /* Two-tone ring: amber with a dark halo, so it stays ≥3:1 on any frame. */
   :focus-visible {
     outline: 2px solid var(--color-amber);
-    outline-offset: 3px;
-    border-radius: 2px;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px rgba(5, 9, 8, 0.92);
+  }
+
+  /* Sections focused programmatically after in-page navigation. */
+  [tabindex="-1"]:focus {
+    outline: none;
+    box-shadow: none;
   }
 }
 
