@@ -1,1 +1,32 @@
-"import Image from \"next/image\";\nimport mark from \"../../../public/brand/turtleworks-mark.png\";\n\ntype LogoProps = {\n  /** Show the wordmark next to the mark. */\n  withWordmark?: boolean;\n  className?: string;\n};\n\n/**\n * Official TurtleWorks mark (unmodified) framed on its native ivory tile,\n * paired with the wordmark. The artwork itself is never redrawn.\n */\nexport function Logo({ withWordmark = true, className = \"\" }: LogoProps) {\n  return (\n    <span className={\"inline-flex items-center gap-3 \" + className}>\n      <Image\n        src={mark}\n        alt={withWordmark ? \"\" : \"TurtleWorks\"}\n        width={40}\n        height={40}\n        priority\n        className=\"h-9 w-9 rounded-lg bg-ivory object-cover ring-1 ring-[rgba(220,235,228,0.15)]\"\n      />\n      {withWordmark ? (\n        <span className=\"font-display text-[1.05rem] font-semibold tracking-tight text-ivory\">\n          TurtleWorks\n        </span>\n      ) : null}\n    </span>\n  );\n}\n"
+import Image from "next/image";
+import mark from "../../../public/brand/turtleworks-mark.png";
+
+type LogoProps = {
+  /** Show the wordmark next to the mark. */
+  withWordmark?: boolean;
+  className?: string;
+};
+
+/**
+ * Official TurtleWorks mark (unmodified) framed on its native ivory tile,
+ * paired with the wordmark. The artwork itself is never redrawn.
+ */
+export function Logo({ withWordmark = true, className = "" }: LogoProps) {
+  return (
+    <span className={"inline-flex items-center gap-3 " + className}>
+      <Image
+        src={mark}
+        alt={withWordmark ? "" : "TurtleWorks"}
+        width={40}
+        height={40}
+        priority
+        className="h-9 w-9 rounded-lg bg-ivory object-cover ring-1 ring-[rgba(220,235,228,0.15)]"
+      />
+      {withWordmark ? (
+        <span className="font-display text-[1.05rem] font-semibold tracking-tight text-ivory">
+          TurtleWorks
+        </span>
+      ) : null}
+    </span>
+  );
+}
