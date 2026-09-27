@@ -1,0 +1,198 @@
+@import "tailwindcss";
+
+/*
+  TurtleWorks design tokens.
+  Brand source of truth: docs/BRAND.md
+  Forest #15382E · Evergreen #1D5B46 · Ivory #F7F5EF · Ink #17211D
+  Slate #53645D · Mint #DCEBE4 · Amber #C58A2E (accent only)
+*/
+
+@theme {
+  /* Brand palette */
+  --color-forest: #15382e;
+  --color-evergreen: #1d5b46;
+  --color-ivory: #f7f5ef;
+  --color-ink: #17211d;
+  --color-slate: #53645d;
+  --color-mint: #dcebe4;
+  --color-amber: #c58a2e;
+
+  /* Cinematic depths (hero video fallbacks) */
+  --color-abyss: #050908;
+  --color-deep: #07110f;
+  --color-teal-black: #081a17;
+
+  /* Semantic surfaces */
+  --color-background: #050908;
+  --color-surface: #08130f;
+  --color-surface-2: #0b1a15;
+
+  /* Typography */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, sans-serif;
+
+  /* Editorial type scale (fluid) */
+  --text-eyebrow: 0.75rem;
+  --text-mega: clamp(2.75rem, 7vw, 6.5rem);
+  --text-h1: clamp(2.25rem, 5.2vw, 4.75rem);
+  --text-h2: clamp(1.9rem, 3.6vw, 3.25rem);
+  --text-h3: clamp(1.35rem, 2vw, 1.85rem);
+
+  /* Layout */
+  --spacing-gutter: clamp(1.25rem, 5vw, 6rem);
+  --container-max: 1440px;
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --nav-h: 4.5rem;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-ivory);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    /* Keeps copy legible over the moving film during brighter frames.
+       Invisible against the dark veils; a quiet safety net over bright water. */
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-amber) 85%, transparent);
+    color: var(--color-abyss);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-amber);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+@layer utilities {
+  .container-tw {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: var(--spacing-gutter);
+  }
+
+  .eyebrow {
+    font-size: var(--text-eyebrow);
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-mint) 78%, transparent);
+  }
+
+  .text-mega { font-size: var(--text-mega); }
+  .text-h1 { font-size: var(--text-h1); }
+  .text-h2 { font-size: var(--text-h2); }
+  .text-h3 { font-size: var(--text-h3); }
+
+  /* Very selective glass — nav + small labels only */
+  .glass {
+    background: rgba(8, 19, 15, 0.55);
+    border: 1px solid rgba(220, 235, 228, 0.1);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+  }
+
+  .hairline {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--color-amber) 60%, transparent),
+      transparent
+    );
+  }
+
+  /* Translucent veil over the fixed film — the video stays visible
+     across every section while body copy remains readable. */
+  .section-solid {
+    background:
+      radial-gradient(
+        120% 80% at 50% -10%,
+        rgba(29, 91, 70, 0.12),
+        transparent 55%
+      ),
+      linear-gradient(rgba(5, 9, 8, 0.5), rgba(5, 9, 8, 0.5));
+  }
+  .section-solid::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(220, 235, 228, 0.16),
+      transparent
+    );
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition:
+      opacity 0.7s var(--ease-emphasis),
+      transform 0.7s var(--ease-emphasis);
+    will-change: opacity, transform;
+  }
+  .reveal--in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
