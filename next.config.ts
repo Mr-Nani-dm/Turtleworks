@@ -8,7 +8,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline'; " +
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' data: blob:; " +
-      "media-src 'self' https://d2ol7oe51mr4n9.cloudfront.net; " +
+      "media-src 'self'; " +
       "font-src 'self' data:; " +
       "connect-src 'self'; " +
       "object-src 'none'; " +
