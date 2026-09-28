@@ -31,7 +31,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "// Last calendar month in IST (UTC+5:30, no daylight saving).\nconst IST_MS = 330 * 60000;\nconst nowIst = new Date(Date.now() + IST_MS);\nconst y = nowIst.getUTCFullYear();\nconst m = nowIst.getUTCMonth();\nconst since = new Date(Date.UTC(y, m - 1, 1) - IST_MS);\nconst until = new Date(Date.UTC(y, m, 1) - IST_MS - 1);\nreturn [{\n  json: {\n    projectId: \"prj_NMo0XTQzQYXy5QSG4rtEWbfHZtEd\",\n    teamId: \"team_Yob32utGKed9CSWYpPDa0oUe\",\n    since: since.toISOString(),\n    until: until.toISOString(),\n    label: new Date(Date.UTC(y, m - 1, 1)).toLocaleString(\"en-IN\", { month: \"long\", year: \"numeric\", timeZone: \"UTC\" }),\n  },\n}];"
+        "jsCode": "// Last calendar month in IST (UTC+5:30, no daylight saving).\n// Vercel Hobby keeps 30 days of analytics, so the analytics window starts no earlier than 29 days ago.\nconst IST_MS = 330 * 60000;\nconst nowIst = new Date(Date.now() + IST_MS);\nconst y = nowIst.getUTCFullYear();\nconst m = nowIst.getUTCMonth();\nconst since = new Date(Date.UTC(y, m - 1, 1) - IST_MS);\nconst until = new Date(Date.UTC(y, m, 1) - IST_MS - 1);\nconst analyticsSince = new Date(Math.max(since.getTime(), Date.now() - 29 * 864e5));\nreturn [{\n  json: {\n    projectId: \"prj_NMo0XTQzQYXy5QSG4rtEWbfHZtEd\",\n    teamId: \"team_Yob32utGKed9CSWYpPDa0oUe\",\n    since: since.toISOString(),\n    until: until.toISOString(),\n    analyticsSince: analyticsSince.toISOString(),\n    analyticsUntil: new Date(Math.max(until.getTime(), analyticsSince.getTime() + 864e5)).toISOString(),\n    label: new Date(Date.UTC(y, m - 1, 1)).toLocaleString(\"en-IN\", { month: \"long\", year: \"numeric\", timeZone: \"UTC\" }),\n  },\n}];"
       }
     },
     {
@@ -60,11 +60,11 @@
             },
             {
               "name": "since",
-              "value": "={{ $('Work out last month (IST)').first().json.since }}"
+              "value": "={{ $('Work out last month (IST)').first().json.analyticsSince }}"
             },
             {
               "name": "until",
-              "value": "={{ $('Work out last month (IST)').first().json.until }}"
+              "value": "={{ $('Work out last month (IST)').first().json.analyticsUntil }}"
             }
           ]
         },
@@ -112,11 +112,11 @@
             },
             {
               "name": "since",
-              "value": "={{ $('Work out last month (IST)').first().json.since }}"
+              "value": "={{ $('Work out last month (IST)').first().json.analyticsSince }}"
             },
             {
               "name": "until",
-              "value": "={{ $('Work out last month (IST)').first().json.until }}"
+              "value": "={{ $('Work out last month (IST)').first().json.analyticsUntil }}"
             },
             {
               "name": "by",
@@ -172,11 +172,11 @@
             },
             {
               "name": "since",
-              "value": "={{ $('Work out last month (IST)').first().json.since }}"
+              "value": "={{ $('Work out last month (IST)').first().json.analyticsSince }}"
             },
             {
               "name": "until",
-              "value": "={{ $('Work out last month (IST)').first().json.until }}"
+              "value": "={{ $('Work out last month (IST)').first().json.analyticsUntil }}"
             },
             {
               "name": "by",
@@ -232,11 +232,11 @@
             },
             {
               "name": "since",
-              "value": "={{ $('Work out last month (IST)').first().json.since }}"
+              "value": "={{ $('Work out last month (IST)').first().json.analyticsSince }}"
             },
             {
               "name": "until",
-              "value": "={{ $('Work out last month (IST)').first().json.until }}"
+              "value": "={{ $('Work out last month (IST)').first().json.analyticsUntil }}"
             },
             {
               "name": "by",
@@ -320,7 +320,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "// Combines Vercel Web Analytics with the leads and deals tables into one monthly email.\nconst period = $(\"Work out last month (IST)\").first().json;\nconst from = Date.parse(period.since);\nconst to = Date.parse(period.until);\nconst inPeriod = (v) => { const t = Date.parse(v); return Number.isFinite(t) && t >= from && t <= to; };\nconst read = (name) => { try { return $(name).first().json; } catch { return {}; } };\nconst all = (name) => { try { return $(name).all().map((i) => i.json); } catch { return []; } };\nconst inr = (n) => Number(n || 0).toLocaleString(\"en-IN\", { style: \"currency\", currency: \"INR\", maximumFractionDigits: 0 });\nconst lc = (v) => String(v ?? \"\").trim().toLowerCase();\n\nconst count = read(\"Vercel · visitors & page views\");\nconst problem = (r) => (r.error ? r.error.message || r.error.code || JSON.stringify(r.error) : null);\nconst analyticsProblem = problem(count) || (count.data ? null : \"no data returned\");\nconst visitors = count.data?.visitors ?? 0;\nconst pageviews = count.data?.pageviews ?? 0;\n\nconst top = (name, key, n) => {\n  const rows = Array.isArray(read(name).data) ? read(name).data : [];\n  return rows.slice(0, n).map((r) => `  ${String(r[key] ?? \"(none)\").padEnd(34)} ${r.pageviews ?? r.count ?? 0} views · ${r.visitors ?? 0} visitors`).join(\"\\n\") || \"  —\";\n};\n\nconst leads = all(\"Read all leads\").filter((r) => r.lead_id);\nconst monthLeads = leads.filter((r) => inPeriod(r.received_at));\nconst byTopic = {};\nfor (const r of monthLeads) for (const t of String(r.topic_hint || \"Unclassified\").split(\", \")) byTopic[t] = (byTopic[t] || 0) + 1;\n\nconst deals = all(\"Read all deals\").filter((r) => r.client_name || r.deal_id);\nconst proposalsSent = deals.filter((r) => inPeriod(r.proposal_sent_on));\nconst openProposals = deals.filter((r) => lc(r.proposal_status) === \"sent\");\nconst invoicesIssued = deals.filter((r) => inPeriod(r.invoice_issued_on));\nconst unpaid = deals.filter((r) => lc(r.invoice_status) === \"unpaid\");\nconst overdue = unpaid.filter((r) => r.invoice_due_on && Date.parse(r.invoice_due_on) < Date.now());\nconst sum = (list, key) => list.reduce((s, r) => s + Number(r[key] || 0), 0);\n\nconst body = [\n  `TurtleWorks — ${period.label}`,\n  \"\",\n  \"WEBSITE (Vercel Web Analytics, production)\",\n  analyticsProblem\n    ? `  Analytics unavailable: ${analyticsProblem}\\n  Check that Web Analytics is enabled and the Vercel token in n8n is valid.`\n    : [\n        `  Visitors:     ${visitors}`,\n        `  Page views:   ${pageviews}`,\n        `  Enquiry rate: ${visitors ? ((monthLeads.length / visitors) * 100).toFixed(1) : \"0.0\"}% of visitors sent an enquiry`,\n        \"\",\n        \"  Top pages:\",\n        top(\"Vercel · top pages\", \"requestPath\", 8),\n        \"\",\n        \"  Top referrers:\",\n        top(\"Vercel · top referrers\", \"referrerHostname\", 6),\n        \"\",\n        \"  Top countries:\",\n        top(\"Vercel · top countries\", \"country\", 6),\n      ].join(\"\\n\"),\n  \"\",\n  \"ENQUIRIES\",\n  `  New this month:          ${monthLeads.length}`,\n  `  Still awaiting a reply:  ${leads.filter((r) => lc(r.status || \"new\") === \"new\").length} (all time)`,\n  ...Object.entries(byTopic).sort((a, b) => b[1] - a[1]).map(([t, n]) => `  · ${t}: ${n}`),\n  \"\",\n  \"PROPOSALS & INVOICES\",\n  `  Proposals sent:          ${proposalsSent.length} (${inr(sum(proposalsSent, \"value_inr\"))})`,\n  `  Proposals awaiting decision: ${openProposals.length} (${inr(sum(openProposals, \"value_inr\"))})`,\n  `  Invoices issued:         ${invoicesIssued.length} (${inr(sum(invoicesIssued, \"invoice_amount_inr\"))})`,\n  `  Unpaid invoices:         ${unpaid.length} (${inr(sum(unpaid, \"invoice_amount_inr\"))}), ${overdue.length} overdue`,\n].join(\"\\n\");\n\nreturn [{ json: { subject: `TurtleWorks monthly report — ${period.label}`, body } }];"
+        "jsCode": "// Combines Vercel Web Analytics with the leads and deals tables into one monthly email.\nconst period = $(\"Work out last month (IST)\").first().json;\nconst from = Date.parse(period.since);\nconst to = Date.parse(period.until);\nconst inPeriod = (v) => { const t = Date.parse(v); return Number.isFinite(t) && t >= from && t <= to; };\nconst read = (name) => { try { return $(name).first().json; } catch { return {}; } };\nconst all = (name) => { try { return $(name).all().map((i) => i.json); } catch { return []; } };\nconst inr = (n) => Number(n || 0).toLocaleString(\"en-IN\", { style: \"currency\", currency: \"INR\", maximumFractionDigits: 0 });\nconst lc = (v) => String(v ?? \"\").trim().toLowerCase();\n\nconst count = read(\"Vercel · visitors & page views\");\nconst problem = (r) => (r.error ? r.error.message || r.error.code || JSON.stringify(r.error) : null);\nconst analyticsProblem = problem(count) || (count.data ? null : \"no data returned\");\nconst visitors = count.data?.visitors ?? 0;\nconst pageviews = count.data?.pageviews ?? 0;\n\nconst top = (name, key, n) => {\n  const rows = Array.isArray(read(name).data) ? read(name).data : [];\n  return rows.slice(0, n).map((r) => `  ${String(r[key] ?? \"(none)\").padEnd(34)} ${r.pageviews ?? r.count ?? 0} views · ${r.visitors ?? 0} visitors`).join(\"\\n\") || \"  —\";\n};\n\nconst leads = all(\"Read all leads\").filter((r) => r.lead_id);\nconst monthLeads = leads.filter((r) => inPeriod(r.received_at));\nconst byTopic = {};\nfor (const r of monthLeads) for (const t of String(r.topic_hint || \"Unclassified\").split(\", \")) byTopic[t] = (byTopic[t] || 0) + 1;\n\nconst deals = all(\"Read all deals\").filter((r) => r.client_name || r.deal_id);\nconst proposalsSent = deals.filter((r) => inPeriod(r.proposal_sent_on));\nconst openProposals = deals.filter((r) => lc(r.proposal_status) === \"sent\");\nconst invoicesIssued = deals.filter((r) => inPeriod(r.invoice_issued_on));\nconst unpaid = deals.filter((r) => lc(r.invoice_status) === \"unpaid\");\nconst overdue = unpaid.filter((r) => r.invoice_due_on && Date.parse(r.invoice_due_on) < Date.now());\nconst sum = (list, key) => list.reduce((s, r) => s + Number(r[key] || 0), 0);\n\nconst body = [\n  `TurtleWorks — ${period.label}`,\n  \"\",\n  `WEBSITE (Vercel Web Analytics, production${period.analyticsSince > period.since ? `, from ${new Date(period.analyticsSince).toLocaleDateString(\"en-IN\", { timeZone: \"Asia/Kolkata\", dateStyle: \"medium\" })} — Hobby keeps 30 days` : \"\"})`,\n  analyticsProblem\n    ? `  Analytics unavailable: ${analyticsProblem}\\n  Check that Web Analytics is enabled and the Vercel token in n8n is valid.`\n    : [\n        `  Visitors:     ${visitors}`,\n        `  Page views:   ${pageviews}`,\n        `  Enquiry rate: ${visitors ? ((monthLeads.length / visitors) * 100).toFixed(1) : \"0.0\"}% of visitors sent an enquiry`,\n        \"\",\n        \"  Top pages:\",\n        top(\"Vercel · top pages\", \"requestPath\", 8),\n        \"\",\n        \"  Top referrers:\",\n        top(\"Vercel · top referrers\", \"referrerHostname\", 6),\n        \"\",\n        \"  Top countries:\",\n        top(\"Vercel · top countries\", \"country\", 6),\n      ].join(\"\\n\"),\n  \"\",\n  \"ENQUIRIES\",\n  `  New this month:          ${monthLeads.length}`,\n  `  Still awaiting a reply:  ${leads.filter((r) => lc(r.status || \"new\") === \"new\").length} (all time)`,\n  ...Object.entries(byTopic).sort((a, b) => b[1] - a[1]).map(([t, n]) => `  · ${t}: ${n}`),\n  \"\",\n  \"PROPOSALS & INVOICES\",\n  `  Proposals sent:          ${proposalsSent.length} (${inr(sum(proposalsSent, \"value_inr\"))})`,\n  `  Proposals awaiting decision: ${openProposals.length} (${inr(sum(openProposals, \"value_inr\"))})`,\n  `  Invoices issued:         ${invoicesIssued.length} (${inr(sum(invoicesIssued, \"invoice_amount_inr\"))})`,\n  `  Unpaid invoices:         ${unpaid.length} (${inr(sum(unpaid, \"invoice_amount_inr\"))}), ${overdue.length} overdue`,\n].join(\"\\n\");\n\nreturn [{ json: { subject: `TurtleWorks monthly report — ${period.label}`, body } }];"
       }
     },
     {
