@@ -1,0 +1,65 @@
+{
+  "name": "TW Deals — proposals & invoices",
+  "columns": [
+    {
+      "name": "deal_id",
+      "type": "string"
+    },
+    {
+      "name": "lead_id",
+      "type": "string"
+    },
+    {
+      "name": "client_name",
+      "type": "string"
+    },
+    {
+      "name": "client_email",
+      "type": "string"
+    },
+    {
+      "name": "title",
+      "type": "string"
+    },
+    {
+      "name": "value_inr",
+      "type": "number"
+    },
+    {
+      "name": "proposal_status",
+      "type": "string"
+    },
+    {
+      "name": "proposal_sent_on",
+      "type": "date"
+    },
+    {
+      "name": "proposal_follow_up_on",
+      "type": "date"
+    },
+    {
+      "name": "invoice_number",
+      "type": "string"
+    },
+    {
+      "name": "invoice_amount_inr",
+      "type": "number"
+    },
+    {
+      "name": "invoice_issued_on",
+      "type": "date"
+    },
+    {
+      "name": "invoice_due_on",
+      "type": "date"
+    },
+    {
+      "name": "invoice_status",
+      "type": "string"
+    },
+    {
+      "name": "notes",
+      "type": "string"
+    }
+  ]
+}

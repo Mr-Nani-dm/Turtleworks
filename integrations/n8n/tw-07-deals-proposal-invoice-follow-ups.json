@@ -1,0 +1,181 @@
+{
+  "name": "TW-07 · Deals · Proposal & invoice follow-ups (daily 09:15 IST)",
+  "nodes": [
+    {
+      "id": "e46f9707-4d22-4ea9-a825-68aaac020ca3",
+      "name": "Every day at 09:15 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "15 9 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2b973e30-2a99-411f-a2b8-d9322ec7975f",
+      "name": "Read all deals",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__DEALS_TABLE_ID__"
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "65a324d8-944d-479d-a798-7160b944148b",
+      "name": "Build team digest of what's due",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -120
+      ],
+      "parameters": {
+        "jsCode": "// Team digest: proposals whose follow-up date has arrived, invoices due within 3 days or overdue.\n\nconst IST_MS = 330 * 60000;\nconst dayOf = (v) => {\n  if (!v) return null;\n  const t = Date.parse(v);\n  return Number.isFinite(t) ? new Date(t + IST_MS).toISOString().slice(0, 10) : null;\n};\nconst today = new Date(Date.now() + IST_MS).toISOString().slice(0, 10);\nconst daysBetween = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 864e5);\nconst nice = (d) => new Date(`${d}T00:00:00Z`).toLocaleDateString(\"en-IN\", { dateStyle: \"medium\", timeZone: \"UTC\" });\nconst inr = (n) => Number(n || 0).toLocaleString(\"en-IN\", { style: \"currency\", currency: \"INR\", maximumFractionDigits: 0 });\nconst lc = (v) => String(v ?? \"\").trim().toLowerCase();\nconst plural = (n, word) => `${n} ${word}${n === 1 ? \"\" : \"s\"}`;\nconst deals =$input.all().map((i) => i.json).filter((r) => r.client_name || r.deal_id);\nconst label = (r) => `${r.deal_id || \"—\"} · ${r.client_name || \"?\"}${r.title ? ` — ${r.title}` : \"\"}`;\n\nconst followUps = deals\n  .filter((r) => lc(r.proposal_status) === \"sent\" && dayOf(r.proposal_follow_up_on) && dayOf(r.proposal_follow_up_on) <= today)\n  .map((r) => `• ${label(r)}\\n  Proposal sent ${dayOf(r.proposal_sent_on) ? nice(dayOf(r.proposal_sent_on)) : \"?\"} · follow-up due ${nice(dayOf(r.proposal_follow_up_on))}${r.value_inr ? ` · ${inr(r.value_inr)}` : \"\"}`);\nconst missingFollowUp = deals\n  .filter((r) => lc(r.proposal_status) === \"sent\" && !dayOf(r.proposal_follow_up_on))\n  .map((r) => `• ${label(r)} — no follow-up date set`);\n\nconst unpaid = deals.filter((r) => lc(r.invoice_status) === \"unpaid\" && dayOf(r.invoice_due_on));\nconst overdue = unpaid\n  .filter((r) => dayOf(r.invoice_due_on) < today)\n  .map((r) => `• ${label(r)}\\n  Invoice ${r.invoice_number || \"?\"} · ${inr(r.invoice_amount_inr)} · due ${nice(dayOf(r.invoice_due_on))} · ${plural(daysBetween(today, dayOf(r.invoice_due_on)), \"day\")} overdue`);\nconst dueSoon = unpaid\n  .filter((r) => { const d = daysBetween(dayOf(r.invoice_due_on), today); return d >= 0 && d <= 3; })\n  .map((r) => `• ${label(r)}\\n  Invoice ${r.invoice_number || \"?\"} · ${inr(r.invoice_amount_inr)} · due ${nice(dayOf(r.invoice_due_on))}`);\n\nconst sections = [\n  [\"Overdue invoices\", overdue],\n  [\"Invoices due in the next 3 days\", dueSoon],\n  [\"Proposals due a follow-up\", followUps],\n  [\"Sent proposals without a follow-up date\", missingFollowUp],\n].filter(([, list]) => list.length);\n\nif (!sections.length) return [];\n\nconst parts = [overdue.length && `${overdue.length} overdue`, dueSoon.length && `${dueSoon.length} due soon`, followUps.length && `${followUps.length} follow-up${followUps.length > 1 ? \"s\" : \"\"}`].filter(Boolean);\nreturn [{\n  json: {\n    subject: `Deals today — ${parts.join(\" · \") || \"check follow-up dates\"}`,\n    body: [\n      ...sections.flatMap(([title, list]) => [title.toUpperCase(), ...list, \"\"]),\n      \"Any client reminders due today are saved in Gmail → Drafts for you to review. Nothing is sent automatically.\",\n      'Update the row in n8n → Data tables → \"TW Deals — proposals & invoices\" (e.g. invoice_status = paid, proposal_status = accepted) to stop reminders.',\n    ].join(\"\\n\"),\n  },\n}];"
+      }
+    },
+    {
+      "id": "1e2b7ee1-0018-4857-a145-6d195f49bb19",
+      "name": "Email deals digest to team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        -120
+      ],
+      "parameters": {
+        "sendTo": "__TEAM_INBOX__",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "60604b1f-a7a0-4f5f-a2f9-597157ce0670",
+      "name": "Build client follow-up drafts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        120
+      ],
+      "parameters": {
+        "jsCode": "// Client drafts, never sent: proposal follow-up on its date (then weekly), invoice reminder 1 day overdue (then weekly).\n\nconst IST_MS = 330 * 60000;\nconst dayOf = (v) => {\n  if (!v) return null;\n  const t = Date.parse(v);\n  return Number.isFinite(t) ? new Date(t + IST_MS).toISOString().slice(0, 10) : null;\n};\nconst today = new Date(Date.now() + IST_MS).toISOString().slice(0, 10);\nconst daysBetween = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 864e5);\nconst nice = (d) => new Date(`${d}T00:00:00Z`).toLocaleDateString(\"en-IN\", { dateStyle: \"medium\", timeZone: \"UTC\" });\nconst inr = (n) => Number(n || 0).toLocaleString(\"en-IN\", { style: \"currency\", currency: \"INR\", maximumFractionDigits: 0 });\nconst lc = (v) => String(v ?? \"\").trim().toLowerCase();\nconst plural = (n, word) => `${n} ${word}${n === 1 ? \"\" : \"s\"}`;\nconst deals =$input.all().map((i) => i.json).filter((r) => r.client_name || r.deal_id);\nconst first = (name) => String(name || \"\").trim().split(/\\s+/)[0] || \"there\";\nconst due = (days) => days === 0 || (days > 0 && days % 7 === 0);\nconst drafts = [];\n\nfor (const r of deals) {\n  if (!r.client_email) continue;\n  const follow = dayOf(r.proposal_follow_up_on);\n  if (lc(r.proposal_status) === \"sent\" && follow && follow <= today && due(daysBetween(today, follow))) {\n    drafts.push({\n      to: r.client_email,\n      subject: `Following up: ${r.title || \"our proposal\"}`,\n      body: [\n        `Hi ${first(r.client_name)},`,\n        \"\",\n        `I wanted to follow up on the proposal we sent${dayOf(r.proposal_sent_on) ? ` on ${nice(dayOf(r.proposal_sent_on))}` : \"\"}${r.title ? ` for ${r.title}` : \"\"}. Do you have any questions, or would it help to talk it through? We're happy to adjust the scope if anything doesn't quite fit.`,\n        \"\",\n        \"Best regards,\",\n        \"TurtleWorks\",\n      ].join(\"\\n\"),\n    });\n  }\n  const dueOn = dayOf(r.invoice_due_on);\n  if (lc(r.invoice_status) === \"unpaid\" && dueOn && dueOn < today) {\n    const late = daysBetween(today, dueOn);\n    if (late === 1 || late % 7 === 0) {\n      drafts.push({\n        to: r.client_email,\n        subject: `Invoice ${r.invoice_number || \"\"} — payment reminder`.replace(\"  \", \" \"),\n        body: [\n          `Hi ${first(r.client_name)},`,\n          \"\",\n          `A friendly reminder that invoice ${r.invoice_number || \"\"} for ${inr(r.invoice_amount_inr)}${r.title ? ` (${r.title})` : \"\"} was due on ${nice(dueOn)}. If it has already been paid, thank you — please ignore this note. Otherwise, could you let us know when we can expect payment?`.replace(\"  \", \" \"),\n          \"\",\n          \"Best regards,\",\n          \"TurtleWorks\",\n        ].join(\"\\n\"),\n      });\n    }\n  }\n}\n\nreturn drafts.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "7716a420-8aa1-4857-a2e3-8e4955a6b3df",
+      "name": "Save client follow-up as Gmail draft",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        120
+      ],
+      "parameters": {
+        "resource": "draft",
+        "operation": "create",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "sendTo": "={{ $json.to }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every day at 09:15 IST": {
+      "main": [
+        [
+          {
+            "node": "Read all deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read all deals": {
+      "main": [
+        [
+          {
+            "node": "Build team digest of what's due",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build client follow-up drafts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build team digest of what's due": {
+      "main": [
+        [
+          {
+            "node": "Email deals digest to team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build client follow-up drafts": {
+      "main": [
+        [
+          {
+            "node": "Save client follow-up as Gmail draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "__ERROR_WORKFLOW_ID__"
+  },
+  "pinData": {}
+}

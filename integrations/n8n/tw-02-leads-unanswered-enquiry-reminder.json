@@ -1,0 +1,126 @@
+{
+  "name": "TW-02 · Leads · Unanswered enquiry reminder (weekdays 09:30 IST)",
+  "nodes": [
+    {
+      "id": "65760dcf-438b-4e84-ace5-2be86bede6db",
+      "name": "Every weekday at 09:30 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 9 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ecaf81bc-5486-4ee7-a0c7-86f583967a78",
+      "name": "Read all leads",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__LEADS_TABLE_ID__"
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "35c882ae-13ff-4194-a377-45c7df403b7f",
+      "name": "Find enquiries awaiting a reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Leads still marked \"new\" after 20 hours. Returns nothing (no email) when the inbox is clear.\nconst WAIT_HOURS = 20;\nconst ist = (d) => new Date(d).toLocaleString(\"en-IN\", { timeZone: \"Asia/Kolkata\", dateStyle: \"medium\", timeStyle: \"short\" });\nconst cutoff = Date.now() - WAIT_HOURS * 3600e3;\nconst pending = $input.all()\n  .map((i) => i.json)\n  .filter((r) => r.lead_id && String(r.status || \"new\").trim().toLowerCase() === \"new\")\n  .filter((r) => new Date(r.received_at).getTime() < cutoff)\n  .sort((a, b) => new Date(a.received_at) - new Date(b.received_at));\n\nif (!pending.length) return [];\n\nconst hours = (d) => Math.round((Date.now() - new Date(d).getTime()) / 3600e3);\nconst lines = pending.map((r) =>\n  `• ${r.lead_id} — ${r.name}${r.company ? ` (${r.company})` : \"\"} <${r.email}>\\n  Received ${ist(r.received_at)} IST · waiting ${hours(r.received_at)} h · ${r.topic_hint}`,\n);\nconst n = pending.length;\n\nreturn [{\n  json: {\n    subject: `${n} website ${n === 1 ? \"enquiry is\" : \"enquiries are\"} waiting for a reply`,\n    body: [\n      `${n} ${n === 1 ? \"enquiry has\" : \"enquiries have\"} been marked \"new\" for more than ${WAIT_HOURS} hours:`,\n      \"\",\n      ...lines,\n      \"\",\n      'Reply from the original notification email, then set status to \"replied\" in n8n → Data tables → \"TW Leads — website enquiries\".',\n    ].join(\"\\n\"),\n  },\n}];"
+      }
+    },
+    {
+      "id": "a625fc3a-1c15-436d-a1ab-ada910ca1e4a",
+      "name": "Email reminder to team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "sendTo": "__TEAM_INBOX__",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every weekday at 09:30 IST": {
+      "main": [
+        [
+          {
+            "node": "Read all leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read all leads": {
+      "main": [
+        [
+          {
+            "node": "Find enquiries awaiting a reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find enquiries awaiting a reply": {
+      "main": [
+        [
+          {
+            "node": "Email reminder to team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "__ERROR_WORKFLOW_ID__"
+  },
+  "pinData": {}
+}

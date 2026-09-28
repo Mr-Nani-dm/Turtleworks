@@ -1,0 +1,65 @@
+{
+  "name": "TW Leads — website enquiries",
+  "columns": [
+    {
+      "name": "lead_id",
+      "type": "string"
+    },
+    {
+      "name": "received_at",
+      "type": "date"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "company",
+      "type": "string"
+    },
+    {
+      "name": "preferred_time",
+      "type": "string"
+    },
+    {
+      "name": "message",
+      "type": "string"
+    },
+    {
+      "name": "topic_hint",
+      "type": "string"
+    },
+    {
+      "name": "source_page",
+      "type": "string"
+    },
+    {
+      "name": "status",
+      "type": "string"
+    },
+    {
+      "name": "ai_summary",
+      "type": "string"
+    },
+    {
+      "name": "ai_service_fit",
+      "type": "string"
+    },
+    {
+      "name": "ai_urgency",
+      "type": "string"
+    },
+    {
+      "name": "ai_spam_risk",
+      "type": "string"
+    },
+    {
+      "name": "notes",
+      "type": "string"
+    }
+  ]
+}

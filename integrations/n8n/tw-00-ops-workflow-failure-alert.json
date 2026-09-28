@@ -1,0 +1,60 @@
+{
+  "name": "TW-00 · Ops · Workflow failure alert (error handler)",
+  "nodes": [
+    {
+      "id": "a2fd465f-b068-4676-a6cf-7b3f94b19ec2",
+      "name": "When any TW workflow fails",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "bff0bc52-ce7b-41a8-aea3-6f00e0689178",
+      "name": "Email failure alert to team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        280,
+        0
+      ],
+      "parameters": {
+        "sendTo": "__TEAM_INBOX__",
+        "subject": "=n8n alert — \"{{ $json.workflow.name }}\" failed",
+        "emailType": "text",
+        "message": "=An n8n workflow failed and may need attention.\n\nWorkflow:     {{ $json.workflow.name }}\nFailed step:  {{ $json.execution.lastNodeExecuted || '—' }}\nError:        {{ $json.execution.error.message }}\nTime (IST):   {{ $now.setZone('Asia/Kolkata').toFormat('dd LLL yyyy, HH:mm') }}\nMode:         {{ $json.execution.mode }}\n\nOpen the execution:\n{{ $json.execution.url }}\n\nIf this is \"TW-01 · Leads\", a website visitor saw \"message wasn't sent\" and may not retry — check the execution for their details.",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When any TW workflow fails": {
+      "main": [
+        [
+          {
+            "node": "Email failure alert to team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

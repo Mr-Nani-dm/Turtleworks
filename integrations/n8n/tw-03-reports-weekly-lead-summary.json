@@ -1,0 +1,126 @@
+{
+  "name": "TW-03 · Reports · Weekly lead summary (Mondays 09:00 IST)",
+  "nodes": [
+    {
+      "id": "2b19013a-2cb5-496d-aa90-fe4ab1ad059b",
+      "name": "Every Monday at 09:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ecaf81bc-5486-4ee7-a0c7-86f583967a78",
+      "name": "Read all leads",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__LEADS_TABLE_ID__"
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "3cb67273-da47-4c5e-a8c2-8f22821263b8",
+      "name": "Summarise the last 7 days",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Last 7 days of website enquiries, grouped by topic and status. Sent even when the week was quiet.\nconst ist = (d) => new Date(d).toLocaleString(\"en-IN\", { timeZone: \"Asia/Kolkata\", dateStyle: \"medium\", timeStyle: \"short\" });\nconst rows = $input.all().map((i) => i.json).filter((r) => r.lead_id);\nconst since = Date.now() - 7 * 864e5;\nconst week = rows.filter((r) => new Date(r.received_at).getTime() >= since);\nconst open = rows.filter((r) => String(r.status || \"new\").trim().toLowerCase() === \"new\");\n\nconst tally = (list, key) => {\n  const counts = {};\n  for (const r of list) for (const k of String(r[key] || \"—\").split(\", \")) counts[k] = (counts[k] || 0) + 1;\n  return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, v]) => `  ${k}: ${v}`).join(\"\\n\") || \"  —\";\n};\nconst day = (d) => new Date(d).toLocaleDateString(\"en-IN\", { timeZone: \"Asia/Kolkata\", dateStyle: \"medium\" });\nconst list = week\n  .sort((a, b) => new Date(b.received_at) - new Date(a.received_at))\n  .map((r) => `• ${r.lead_id} · ${ist(r.received_at)} · ${r.name}${r.company ? ` (${r.company})` : \"\"} · ${r.status || \"new\"}`)\n  .join(\"\\n\");\n\nreturn [{\n  json: {\n    subject: `TurtleWorks weekly leads — ${week.length} new (${day(since)} – ${day(Date.now())})`,\n    body: [\n      `Website enquiries, ${day(since)} – ${day(Date.now())}`,\n      \"\",\n      `New this week:            ${week.length}`,\n      `Still awaiting a reply:   ${open.length} (all time)`,\n      `Total leads logged:       ${rows.length}`,\n      \"\",\n      \"By topic (this week):\",\n      tally(week, \"topic_hint\"),\n      \"\",\n      \"By status (this week):\",\n      tally(week, \"status\"),\n      \"\",\n      week.length ? \"This week's enquiries:\" : \"No new enquiries this week.\",\n      list,\n    ].join(\"\\n\").trim(),\n  },\n}];"
+      }
+    },
+    {
+      "id": "7c7581bb-c4a2-44e2-a949-3f3484aa8b28",
+      "name": "Email weekly summary to team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "sendTo": "__TEAM_INBOX__",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Monday at 09:00 IST": {
+      "main": [
+        [
+          {
+            "node": "Read all leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read all leads": {
+      "main": [
+        [
+          {
+            "node": "Summarise the last 7 days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarise the last 7 days": {
+      "main": [
+        [
+          {
+            "node": "Email weekly summary to team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "__ERROR_WORKFLOW_ID__"
+  },
+  "pinData": {}
+}

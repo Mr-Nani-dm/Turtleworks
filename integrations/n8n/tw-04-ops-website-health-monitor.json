@@ -1,0 +1,158 @@
+{
+  "name": "TW-04 · Ops · Website health monitor (hourly)",
+  "nodes": [
+    {
+      "id": "dd82d001-89ae-4bb1-afd8-d6c30326342d",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "daa54cf4-f030-4eb2-a294-28b4992a6726",
+      "name": "List pages to check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [\n  { label: \"Homepage\", url: \"https://www.turtleworks.in/\", expect: 200, contains: \"TurtleWorks\" },\n  { label: \"Privacy notice\", url: \"https://www.turtleworks.in/privacy\", expect: 200 },\n  { label: \"Sitemap\", url: \"https://www.turtleworks.in/sitemap.xml\", expect: 200, contains: \"<urlset\" },\n  { label: \"Enquiry API (GET → 405 means the route is live)\", url: \"https://www.turtleworks.in/api/contact\", expect: 405 },\n].map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "38cf1b16-0666-4de0-a4ff-23dc16c60407",
+      "name": "Fetch each page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "7e8aa76d-f4b5-4cae-a257-9855f69bae3e",
+      "name": "Evaluate health & detect change",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Emails only when the site changes state (down / recovered), plus a reminder every 6 h while down.\nconst REMIND_HOURS = 6;\nconst targets = $(\"List pages to check\").all().map((i) => i.json);\nconst results = $input.all().map(({ json }, i) => {\n  const t = targets[i];\n  const status = json.statusCode ?? null;\n  const body = typeof json.body === \"string\" ? json.body : String(json.data ?? \"\");\n  const problem = json.error\n    ? `request failed: ${json.error.message || json.error}`\n    : status !== t.expect\n      ? `HTTP ${status} (expected ${t.expect})`\n      : t.contains && !body.includes(t.contains)\n        ? `missing \"${t.contains}\" in response`\n        : null;\n  return { ...t, status, ok: !problem, problem };\n});\n\nconst state = $getWorkflowStaticData(\"global\");\nconst now = Date.now();\nconst healthy = results.every((r) => r.ok);\nconst wasHealthy = state.healthy !== false;\nlet kind = null;\n\nif (!healthy && wasHealthy) { kind = \"DOWN\"; state.downSince = now; state.lastAlert = now; }\nelse if (!healthy && now - (state.lastAlert || 0) >= REMIND_HOURS * 3600e3) { kind = \"STILL DOWN\"; state.lastAlert = now; }\nelse if (healthy && !wasHealthy) { kind = \"RECOVERED\"; }\nconst downSince = state.downSince;\nstate.healthy = healthy;\nif (healthy) delete state.downSince;\n\nif (!kind) return [];\n\nconst ist = (d) => new Date(d).toLocaleString(\"en-IN\", { timeZone: \"Asia/Kolkata\", dateStyle: \"medium\", timeStyle: \"short\" });\nconst mins = downSince ? Math.round((now - downSince) / 60000) : 0;\nreturn [{\n  json: {\n    subject: `[${kind}] www.turtleworks.in — ${healthy ? `back up after ~${mins} min` : `${results.filter((r) => !r.ok).length} check(s) failing`}`,\n    body: [\n      `Website health check at ${ist(now)} IST${downSince ? ` · problem first seen ${ist(downSince)} IST` : \"\"}`,\n      \"\",\n      ...results.map((r) => `${r.ok ? \"OK  \" : \"FAIL\"}  ${r.label}\\n      ${r.url}${r.ok ? \"\" : `\\n      → ${r.problem}`}`),\n      \"\",\n      healthy ? \"All checks pass again. No action needed.\" : \"Check Vercel → turtleworks → Deployments and the domain settings.\",\n    ].join(\"\\n\"),\n  },\n}];"
+      }
+    },
+    {
+      "id": "d06aa863-9f2f-4988-a44d-5b683c60fead",
+      "name": "Email health alert to team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "sendTo": "__TEAM_INBOX__",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "List pages to check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List pages to check": {
+      "main": [
+        [
+          {
+            "node": "Fetch each page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch each page": {
+      "main": [
+        [
+          {
+            "node": "Evaluate health & detect change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate health & detect change": {
+      "main": [
+        [
+          {
+            "node": "Email health alert to team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "__ERROR_WORKFLOW_ID__"
+  },
+  "pinData": {}
+}

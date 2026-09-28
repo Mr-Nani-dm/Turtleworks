@@ -1,0 +1,377 @@
+{
+  "name": "TW-01 · Leads · Website enquiry intake — notify, log, acknowledge",
+  "nodes": [
+    {
+      "id": "e62b8812-a231-45d2-a380-b00728573147",
+      "name": "Receive website enquiry",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "turtleworks-contact",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "b4e2d9c7-5a31-4f8e-a0c6-3d7f9e2b1a44",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__WEBHOOK_SECRET_CREDENTIAL_ID__",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "db4416d1-6171-4135-a261-fe5e53dc045c",
+      "name": "Prepare lead record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Normalises the website payload into one lead record.\n// topic_hint is a keyword guess against the six TurtleWorks service lines — a triage aid, not a classification.\nconst TOPICS = [\n  [\"Consulting\", /\\b(consult|strateg|roadmap|advice|advis|assess|audit|discovery)/],\n  [\"Custom software\", /\\b(app|application|software|website|web site|portal|platform|develop|mvp|dashboard|internal tool)/],\n  [\"Automation\", /\\b(automat|integrat|workflow|n8n|zapier|api|sync|pipeline|crm|erp|manual|spreadsheet|excel)/],\n  [\"Digital experience\", /\\b(ux|ui|design|redesign|user experience|interface|accessib)/],\n  [\"Search & growth\", /\\b(seo|search engine|google|marketing|traffic|ranking|ads|campaign)/],\n  [\"Cloud & cost\", /\\b(cloud|azure|aws|gcp|hosting|server|cost|billing|finops|infrastructure|devops)/],\n];\nconst clean = (v, max) => String(v ?? \"\").replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/g, \"\").trim().slice(0, max);\nconst ist = (d) => new Date(d).toLocaleString(\"en-IN\", { timeZone: \"Asia/Kolkata\", dateStyle: \"medium\", timeStyle: \"short\" });\n\nreturn $input.all().map(({ json }) => {\n  const b = json.body ?? {};\n  const now = new Date();\n  const name = clean(b.name, 120);\n  const company = clean(b.company, 160);\n  const message = clean(b.message, 5000);\n  const text = `${message} ${company}`.toLowerCase();\n  const topics = TOPICS.filter(([, re]) => re.test(text)).map(([t]) => t);\n  const firstName = (name.split(/\\s+/)[0] || \"\").replace(/[^\\p{L}'-]/gu, \"\").slice(0, 40);\n\n  return {\n    json: {\n      lead_id: `TW-${now.toISOString().slice(0, 10).replace(/-/g, \"\")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,\n      received_at: now.toISOString(),\n      received_at_ist: ist(now),\n      name,\n      first_name: firstName || \"there\",\n      email: clean(b.email, 254).toLowerCase(),\n      company,\n      preferred_time: clean(b.preferredTime, 120),\n      message,\n      topic_hint: topics.length ? topics.join(\", \") : \"Unclassified\",\n      source_page: clean(b.page, 300) || \"/\",\n      status: \"new\",\n    },\n  };\n});"
+      }
+    },
+    {
+      "id": "bc6246ef-7dd5-4422-a4bd-3086d4d295e4",
+      "name": "Notify team — new enquiry",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "sendTo": "__TEAM_INBOX__",
+        "subject": "=[{{ $json.lead_id }}] New enquiry — {{ $json.name }}{{ $json.company ? ' (' + $json.company + ')' : '' }} · {{ $json.topic_hint }}",
+        "emailType": "text",
+        "message": "=New enquiry from the TurtleWorks website\n\nReference:   {{ $json.lead_id }}\nReceived:    {{ $json.received_at_ist }} IST\nName:        {{ $json.name }}\nEmail:       {{ $json.email }}\nCompany:     {{ $json.company || '—' }}\nBest time:   {{ $json.preferred_time || '—' }}\nTopic hint:  {{ $json.topic_hint }} (automatic keyword guess)\nPage:        {{ $json.source_page }}\n\n— Message —\n{{ $json.message }}\n\n—\nReply to this email to answer {{ $json.first_name }} directly.\nWhen you've replied, set status to \"replied\" in n8n → Data tables → \"TW Leads — website enquiries\" so the daily reminder stops.",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Website",
+          "replyTo": "={{ $json.email }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "aa67110f-fe30-4dcd-a6e9-f4de11ea7c3f",
+      "name": "Confirm receipt to website",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"ok\": true }",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "13c1e444-c972-49f7-ad82-7c6f469d7a28",
+      "name": "Log lead to TW Leads table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__LEADS_TABLE_ID__"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $('Prepare lead record').item.json.lead_id }}",
+            "received_at": "={{ $('Prepare lead record').item.json.received_at }}",
+            "name": "={{ $('Prepare lead record').item.json.name }}",
+            "email": "={{ $('Prepare lead record').item.json.email }}",
+            "company": "={{ $('Prepare lead record').item.json.company }}",
+            "preferred_time": "={{ $('Prepare lead record').item.json.preferred_time }}",
+            "message": "={{ $('Prepare lead record').item.json.message }}",
+            "topic_hint": "={{ $('Prepare lead record').item.json.topic_hint }}",
+            "source_page": "={{ $('Prepare lead record').item.json.source_page }}",
+            "status": "={{ $('Prepare lead record').item.json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "received_at",
+              "displayName": "received_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "preferred_time",
+              "displayName": "preferred_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "topic_hint",
+              "displayName": "topic_hint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_page",
+              "displayName": "source_page",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "e786e1c5-ca1f-426e-a724-5fb3fe0c549e",
+      "name": "Package lead for AI triage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $(\"Prepare lead record\").all().map(({ json }) => ({ json }));"
+      }
+    },
+    {
+      "id": "2ca1f131-8e0e-4ccd-ae00-6bd2f3f7ffd7",
+      "name": "Hand off to AI triage (TW-05)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        0
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__AI_TRIAGE_WORKFLOW_ID__"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "disabled": true,
+      "onError": "continueRegularOutput",
+      "notes": "Enable after TW-05 has its Gemini credential and is published, and ENQUIRY_AI_PROCESSOR is set in Vercel."
+    },
+    {
+      "id": "44bfea2e-4c52-4e2b-a083-a6dd5f285cad",
+      "name": "Acknowledge enquirer — auto-reply",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1680,
+        0
+      ],
+      "parameters": {
+        "sendTo": "={{ $('Prepare lead record').item.json.email }}",
+        "subject": "We've received your enquiry — TurtleWorks",
+        "emailType": "text",
+        "message": "=Hi {{ $('Prepare lead record').item.json.first_name }},\n\nThank you for getting in touch with TurtleWorks. Your message has reached us, and we'll read it properly and reply personally to arrange a conversation.\n\nYour reference: {{ $('Prepare lead record').item.json.lead_id }}\n\nIf anything is time-sensitive, simply reply to this email.\n\nTurtleWorks\nBusiness Solutions & Technology Partner\nhttps://www.turtleworks.in",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      },
+      "disabled": true,
+      "onError": "continueRegularOutput",
+      "notes": "Enable once you've confirmed the sending Gmail account is the company address."
+    }
+  ],
+  "connections": {
+    "Receive website enquiry": {
+      "main": [
+        [
+          {
+            "node": "Prepare lead record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare lead record": {
+      "main": [
+        [
+          {
+            "node": "Notify team — new enquiry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify team — new enquiry": {
+      "main": [
+        [
+          {
+            "node": "Confirm receipt to website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm receipt to website": {
+      "main": [
+        [
+          {
+            "node": "Log lead to TW Leads table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log lead to TW Leads table": {
+      "main": [
+        [
+          {
+            "node": "Package lead for AI triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Package lead for AI triage": {
+      "main": [
+        [
+          {
+            "node": "Hand off to AI triage (TW-05)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hand off to AI triage (TW-05)": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge enquirer — auto-reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "__ERROR_WORKFLOW_ID__"
+  },
+  "pinData": {}
+}

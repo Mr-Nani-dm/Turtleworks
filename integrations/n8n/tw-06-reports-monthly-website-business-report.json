@@ -1,0 +1,460 @@
+{
+  "name": "TW-06 · Reports · Monthly website & business report (1st, 09:00 IST)",
+  "nodes": [
+    {
+      "id": "e52ab7cf-3491-49b3-ad64-ed4da06d44a1",
+      "name": "On the 1st of each month at 09:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 1 * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3c6774f3-9e7a-4f3a-aee0-8fc9fac695b2",
+      "name": "Work out last month (IST)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Last calendar month in IST (UTC+5:30, no daylight saving).\nconst IST_MS = 330 * 60000;\nconst nowIst = new Date(Date.now() + IST_MS);\nconst y = nowIst.getUTCFullYear();\nconst m = nowIst.getUTCMonth();\nconst since = new Date(Date.UTC(y, m - 1, 1) - IST_MS);\nconst until = new Date(Date.UTC(y, m, 1) - IST_MS - 1);\nreturn [{\n  json: {\n    projectId: \"prj_NMo0XTQzQYXy5QSG4rtEWbfHZtEd\",\n    teamId: \"team_Yob32utGKed9CSWYpPDa0oUe\",\n    since: since.toISOString(),\n    until: until.toISOString(),\n    label: new Date(Date.UTC(y, m - 1, 1)).toLocaleString(\"en-IN\", { month: \"long\", year: \"numeric\", timeZone: \"UTC\" }),\n  },\n}];"
+      }
+    },
+    {
+      "id": "24fad2c8-855e-4dac-ad53-7db0c6046634",
+      "name": "Vercel · visitors & page views",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "url": "https://api.vercel.com/v1/query/web-analytics/visits/count",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "projectId",
+              "value": "={{ $('Work out last month (IST)').first().json.projectId }}"
+            },
+            {
+              "name": "teamId",
+              "value": "={{ $('Work out last month (IST)').first().json.teamId }}"
+            },
+            {
+              "name": "since",
+              "value": "={{ $('Work out last month (IST)').first().json.since }}"
+            },
+            {
+              "name": "until",
+              "value": "={{ $('Work out last month (IST)').first().json.until }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__VERCEL_TOKEN_CREDENTIAL_ID__",
+          "name": "TW · Vercel API token"
+        }
+      },
+      "executeOnce": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "b708635d-d3b8-420c-a7f5-600e37f72850",
+      "name": "Vercel · top pages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "url": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "projectId",
+              "value": "={{ $('Work out last month (IST)').first().json.projectId }}"
+            },
+            {
+              "name": "teamId",
+              "value": "={{ $('Work out last month (IST)').first().json.teamId }}"
+            },
+            {
+              "name": "since",
+              "value": "={{ $('Work out last month (IST)').first().json.since }}"
+            },
+            {
+              "name": "until",
+              "value": "={{ $('Work out last month (IST)').first().json.until }}"
+            },
+            {
+              "name": "by",
+              "value": "requestPath"
+            },
+            {
+              "name": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__VERCEL_TOKEN_CREDENTIAL_ID__",
+          "name": "TW · Vercel API token"
+        }
+      },
+      "executeOnce": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "5694e392-4d67-4b1e-ad67-552d53013d42",
+      "name": "Vercel · top referrers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "url": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "projectId",
+              "value": "={{ $('Work out last month (IST)').first().json.projectId }}"
+            },
+            {
+              "name": "teamId",
+              "value": "={{ $('Work out last month (IST)').first().json.teamId }}"
+            },
+            {
+              "name": "since",
+              "value": "={{ $('Work out last month (IST)').first().json.since }}"
+            },
+            {
+              "name": "until",
+              "value": "={{ $('Work out last month (IST)').first().json.until }}"
+            },
+            {
+              "name": "by",
+              "value": "referrerHostname"
+            },
+            {
+              "name": "limit",
+              "value": "8"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__VERCEL_TOKEN_CREDENTIAL_ID__",
+          "name": "TW · Vercel API token"
+        }
+      },
+      "executeOnce": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "60e856ec-3c7d-4cab-a533-19440ea01897",
+      "name": "Vercel · top countries",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "url": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "projectId",
+              "value": "={{ $('Work out last month (IST)').first().json.projectId }}"
+            },
+            {
+              "name": "teamId",
+              "value": "={{ $('Work out last month (IST)').first().json.teamId }}"
+            },
+            {
+              "name": "since",
+              "value": "={{ $('Work out last month (IST)').first().json.since }}"
+            },
+            {
+              "name": "until",
+              "value": "={{ $('Work out last month (IST)').first().json.until }}"
+            },
+            {
+              "name": "by",
+              "value": "country"
+            },
+            {
+              "name": "limit",
+              "value": "8"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__VERCEL_TOKEN_CREDENTIAL_ID__",
+          "name": "TW · Vercel API token"
+        }
+      },
+      "executeOnce": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "c0af6013-c030-4f65-af6c-14e1d80b4dd2",
+      "name": "Read all leads",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__LEADS_TABLE_ID__"
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "bd0e93fa-fc0d-44c3-a663-b4ce8bda8116",
+      "name": "Read all deals",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__DEALS_TABLE_ID__"
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "e565b8bf-3076-487e-a23e-d96bbdb2b7c9",
+      "name": "Compose monthly report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Combines Vercel Web Analytics with the leads and deals tables into one monthly email.\nconst period = $(\"Work out last month (IST)\").first().json;\nconst from = Date.parse(period.since);\nconst to = Date.parse(period.until);\nconst inPeriod = (v) => { const t = Date.parse(v); return Number.isFinite(t) && t >= from && t <= to; };\nconst read = (name) => { try { return $(name).first().json; } catch { return {}; } };\nconst all = (name) => { try { return $(name).all().map((i) => i.json); } catch { return []; } };\nconst inr = (n) => Number(n || 0).toLocaleString(\"en-IN\", { style: \"currency\", currency: \"INR\", maximumFractionDigits: 0 });\nconst lc = (v) => String(v ?? \"\").trim().toLowerCase();\n\nconst count = read(\"Vercel · visitors & page views\");\nconst problem = (r) => (r.error ? r.error.message || r.error.code || JSON.stringify(r.error) : null);\nconst analyticsProblem = problem(count) || (count.data ? null : \"no data returned\");\nconst visitors = count.data?.visitors ?? 0;\nconst pageviews = count.data?.pageviews ?? 0;\n\nconst top = (name, key, n) => {\n  const rows = Array.isArray(read(name).data) ? read(name).data : [];\n  return rows.slice(0, n).map((r) => `  ${String(r[key] ?? \"(none)\").padEnd(34)} ${r.pageviews ?? r.count ?? 0} views · ${r.visitors ?? 0} visitors`).join(\"\\n\") || \"  —\";\n};\n\nconst leads = all(\"Read all leads\").filter((r) => r.lead_id);\nconst monthLeads = leads.filter((r) => inPeriod(r.received_at));\nconst byTopic = {};\nfor (const r of monthLeads) for (const t of String(r.topic_hint || \"Unclassified\").split(\", \")) byTopic[t] = (byTopic[t] || 0) + 1;\n\nconst deals = all(\"Read all deals\").filter((r) => r.client_name || r.deal_id);\nconst proposalsSent = deals.filter((r) => inPeriod(r.proposal_sent_on));\nconst openProposals = deals.filter((r) => lc(r.proposal_status) === \"sent\");\nconst invoicesIssued = deals.filter((r) => inPeriod(r.invoice_issued_on));\nconst unpaid = deals.filter((r) => lc(r.invoice_status) === \"unpaid\");\nconst overdue = unpaid.filter((r) => r.invoice_due_on && Date.parse(r.invoice_due_on) < Date.now());\nconst sum = (list, key) => list.reduce((s, r) => s + Number(r[key] || 0), 0);\n\nconst body = [\n  `TurtleWorks — ${period.label}`,\n  \"\",\n  \"WEBSITE (Vercel Web Analytics, production)\",\n  analyticsProblem\n    ? `  Analytics unavailable: ${analyticsProblem}\\n  Check that Web Analytics is enabled and the Vercel token in n8n is valid.`\n    : [\n        `  Visitors:     ${visitors}`,\n        `  Page views:   ${pageviews}`,\n        `  Enquiry rate: ${visitors ? ((monthLeads.length / visitors) * 100).toFixed(1) : \"0.0\"}% of visitors sent an enquiry`,\n        \"\",\n        \"  Top pages:\",\n        top(\"Vercel · top pages\", \"requestPath\", 8),\n        \"\",\n        \"  Top referrers:\",\n        top(\"Vercel · top referrers\", \"referrerHostname\", 6),\n        \"\",\n        \"  Top countries:\",\n        top(\"Vercel · top countries\", \"country\", 6),\n      ].join(\"\\n\"),\n  \"\",\n  \"ENQUIRIES\",\n  `  New this month:          ${monthLeads.length}`,\n  `  Still awaiting a reply:  ${leads.filter((r) => lc(r.status || \"new\") === \"new\").length} (all time)`,\n  ...Object.entries(byTopic).sort((a, b) => b[1] - a[1]).map(([t, n]) => `  · ${t}: ${n}`),\n  \"\",\n  \"PROPOSALS & INVOICES\",\n  `  Proposals sent:          ${proposalsSent.length} (${inr(sum(proposalsSent, \"value_inr\"))})`,\n  `  Proposals awaiting decision: ${openProposals.length} (${inr(sum(openProposals, \"value_inr\"))})`,\n  `  Invoices issued:         ${invoicesIssued.length} (${inr(sum(invoicesIssued, \"invoice_amount_inr\"))})`,\n  `  Unpaid invoices:         ${unpaid.length} (${inr(sum(unpaid, \"invoice_amount_inr\"))}), ${overdue.length} overdue`,\n].join(\"\\n\");\n\nreturn [{ json: { subject: `TurtleWorks monthly report — ${period.label}`, body } }];"
+      }
+    },
+    {
+      "id": "380e7e76-b430-4174-af0a-37dd06ef6051",
+      "name": "Email monthly report to team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2160,
+        0
+      ],
+      "parameters": {
+        "sendTo": "__TEAM_INBOX__",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "On the 1st of each month at 09:00 IST": {
+      "main": [
+        [
+          {
+            "node": "Work out last month (IST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Work out last month (IST)": {
+      "main": [
+        [
+          {
+            "node": "Vercel · visitors & page views",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vercel · visitors & page views": {
+      "main": [
+        [
+          {
+            "node": "Vercel · top pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vercel · top pages": {
+      "main": [
+        [
+          {
+            "node": "Vercel · top referrers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vercel · top referrers": {
+      "main": [
+        [
+          {
+            "node": "Vercel · top countries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vercel · top countries": {
+      "main": [
+        [
+          {
+            "node": "Read all leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read all leads": {
+      "main": [
+        [
+          {
+            "node": "Read all deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read all deals": {
+      "main": [
+        [
+          {
+            "node": "Compose monthly report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose monthly report": {
+      "main": [
+        [
+          {
+            "node": "Email monthly report to team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "__ERROR_WORKFLOW_ID__"
+  },
+  "pinData": {}
+}
