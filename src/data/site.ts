@@ -5,7 +5,7 @@
 
   NEXT_PUBLIC_SITE_URL       canonical origin, e.g. https://turtleworks.co
   NEXT_PUBLIC_CONTACT_EMAIL  public inbox shown as a direct-email option
-  NEXT_PUBLIC_BOOKING_URL    Cal.com / Calendly link for booking a call
+  NEXT_PUBLIC_BOOKING_URL    https booking page (Google Calendar, Cal.com, Calendly)
   NEXT_PUBLIC_LEGAL_NAME     registered / trading entity, e.g. "TurtleWorks Ltd"
   NEXT_PUBLIC_LOCATION       where you operate from, e.g. "Hyderabad, India"
 */
@@ -13,6 +13,11 @@
 const clean = (value: string | undefined) => {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+};
+
+const httpsUrl = (value: string | undefined) => {
+  const url = clean(value);
+  return url && /^https:\/\/[^\s"'<>]+$/i.test(url) ? url : null;
 };
 
 const vercelProductionUrl = clean(process.env.VERCEL_PROJECT_PRODUCTION_URL);
@@ -27,7 +32,7 @@ export const site = {
     "https://turtleworks.in"
   ).replace(/\/+$/, ""),
   email: clean(process.env.NEXT_PUBLIC_CONTACT_EMAIL) ?? "hello@turtleworks.in",
-  bookingUrl: clean(process.env.NEXT_PUBLIC_BOOKING_URL),
+  bookingUrl: httpsUrl(process.env.NEXT_PUBLIC_BOOKING_URL),
   legalName: clean(process.env.NEXT_PUBLIC_LEGAL_NAME),
   location: clean(process.env.NEXT_PUBLIC_LOCATION),
   description:

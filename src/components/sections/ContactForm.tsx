@@ -17,7 +17,7 @@ type Props = {
   bookingUrl: string | null;
 };
 
-const FIELD_ORDER: ContactField[] = ["name", "email", "company", "message"];
+const FIELD_ORDER: ContactField[] = ["name", "email", "company", "preferredTime", "message"];
 
 const inputClass = (invalid: boolean) =>
   "mt-2 block w-full rounded-xl border bg-[rgba(5,9,8,0.6)] px-4 py-3 text-base text-ivory " +
@@ -193,7 +193,7 @@ export function ContactForm({ email, bookingUrl }: Props) {
           {fieldError("email")}
         </div>
 
-        <div className="sm:col-span-2">
+        <div>
           <label htmlFor="company" className="text-sm font-medium text-ivory">
             Company <span className="font-normal text-sage">(optional)</span>
           </label>
@@ -209,6 +209,25 @@ export function ContactForm({ email, bookingUrl }: Props) {
             className={inputClass(Boolean(errors.company))}
           />
           {fieldError("company")}
+        </div>
+
+        <div>
+          <label htmlFor="preferredTime" className="text-sm font-medium text-ivory">
+            Best time for a call <span className="font-normal text-sage">(optional)</span>
+          </label>
+          <input
+            id="preferredTime"
+            name="preferredTime"
+            type="text"
+            autoComplete="off"
+            placeholder="e.g. weekday mornings, IST"
+            maxLength={contactLimits.preferredTime}
+            aria-invalid={Boolean(errors.preferredTime)}
+            aria-describedby={describedBy("preferredTime")}
+            onChange={() => revalidate("preferredTime")}
+            className={inputClass(Boolean(errors.preferredTime))}
+          />
+          {fieldError("preferredTime")}
         </div>
 
         <div className="sm:col-span-2">

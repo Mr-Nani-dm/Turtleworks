@@ -54,6 +54,7 @@ export async function deliverEnquiry(
       `Name: ${enquiry.name}`,
       `Email: ${enquiry.email}`,
       `Company: ${enquiry.company || "—"}`,
+      `Best time for a call: ${enquiry.preferredTime || "—"}`,
       `Submitted: ${meta.submittedAt}`,
       "",
       enquiry.message,

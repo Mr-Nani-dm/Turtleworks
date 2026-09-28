@@ -20,6 +20,7 @@ export const metadata: Metadata = pageMetadata({
 
 const UPDATED = "27 September 2026";
 const analyticsOn = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "1";
+const aiProcessor = process.env.ENQUIRY_AI_PROCESSOR?.trim() || null;
 
 export default function PrivacyPage() {
   const delivery = getDeliveryMode();
@@ -58,7 +59,7 @@ export default function PrivacyPage() {
       <p>When you send an enquiry through this site, we receive:</p>
       <ul>
         <li>your name and email address,</li>
-        <li>your company name, if you choose to give it,</li>
+        <li>your company name and a good time to call, if you choose to give them,</li>
         <li>the message you write,</li>
         <li>the time you sent it and the page you sent it from.</li>
       </ul>
@@ -100,6 +101,15 @@ export default function PrivacyPage() {
         . These providers may process data outside your country, under
         safeguards such as standard contractual clauses.
       </p>
+      {aiProcessor ? (
+        <p>
+          To help us reply sooner, your enquiry is also passed to an AI service
+          ({aiProcessor}) that summarises it and prepares a draft reply. A person
+          reads your enquiry and reviews every reply before it is sent; no
+          decision about you is made automatically. The service is used under
+          terms that do not allow your enquiry to be used to train its models.
+        </p>
+      ) : null}
 
       <h2>How long we keep it</h2>
       <p>

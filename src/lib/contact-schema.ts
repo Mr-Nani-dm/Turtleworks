@@ -2,6 +2,7 @@ export type ContactInput = {
   name: string;
   email: string;
   company: string;
+  preferredTime: string;
   message: string;
 };
 
@@ -12,6 +13,7 @@ export const contactLimits = {
   name: 100,
   email: 200,
   company: 120,
+  preferredTime: 120,
   messageMin: 10,
   message: 4000,
 } as const;
@@ -40,6 +42,7 @@ export function validateContact(raw: Record<string, unknown>):
     name: line(raw.name),
     email: line(raw.email).toLowerCase(),
     company: line(raw.company),
+    preferredTime: line(raw.preferredTime),
     message: block(raw.message),
   };
   const errors: ContactErrors = {};
@@ -54,6 +57,9 @@ export function validateContact(raw: Record<string, unknown>):
 
   if (data.company.length > contactLimits.company)
     errors.company = `Please keep this under ${contactLimits.company} characters.`;
+
+  if (data.preferredTime.length > contactLimits.preferredTime)
+    errors.preferredTime = `Please keep this under ${contactLimits.preferredTime} characters.`;
 
   if (data.message.length < contactLimits.messageMin)
     errors.message = "A sentence or two about the problem helps us reply usefully.";
