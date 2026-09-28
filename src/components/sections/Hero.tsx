@@ -18,14 +18,16 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="relative flex min-h-[100svh] items-center pb-16 pt-[calc(var(--nav-h)+1.5rem)] md:pb-20"
+      className="relative flex min-h-[100svh] items-end pb-12 pt-[calc(var(--nav-h)+1.5rem)] md:items-center md:pb-20"
     >
       {/* Local scrim behind the copy: uniform on small screens (the film's
           bright centre sits behind the text there), a soft pool on desktop
           that fades out before the turtle. */}
+      {/* Portrait phones: the turtle fills the upper screen, so the scrim
+          starts clear and deepens where the copy sits. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[rgba(5,9,8,0.52)] lg:bg-transparent lg:bg-[radial-gradient(ellipse_62%_78%_at_24%_52%,rgba(5,9,8,0.74),rgba(5,9,8,0.36)_58%,transparent_82%)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,transparent_28%,rgba(5,9,8,0.5)_52%,rgba(5,9,8,0.72)_100%)] md:bg-none md:bg-[rgba(5,9,8,0.52)] lg:bg-transparent lg:bg-[radial-gradient(ellipse_62%_78%_at_24%_52%,rgba(5,9,8,0.74),rgba(5,9,8,0.36)_58%,transparent_82%)]"
       />
       <Container className="relative w-full">
         <div className="max-w-2xl">
@@ -44,9 +46,9 @@ export function Hero() {
 
           <Enter delay={140}>
             <p className="mt-7 max-w-xl text-lg leading-relaxed text-ivory-soft">
-              We understand the problem first, then design the right mix of
-              technology, automation, digital experience and business solutions
-              around what you actually need.
+              We build websites, get you found on Google and AI search, automate
+              WhatsApp and everyday work, and create dashboards and custom software.
+              Always starting with the problem you actually need solved.
             </p>
           </Enter>
 
@@ -64,7 +66,7 @@ export function Hero() {
           <Enter delay={300}>
             <ul
               aria-label="What we do"
-              className="mt-10 flex max-w-xl flex-wrap items-center gap-x-3 gap-y-2 text-sm text-ivory-muted"
+              className="mt-10 hidden max-w-xl flex-wrap items-center gap-x-3 gap-y-2 text-sm text-ivory-muted md:flex"
             >
               {services.map((s, i) => (
                 <li key={s.id} className="flex items-center gap-3">

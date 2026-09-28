@@ -410,3 +410,36 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 }
+
+/*
+  Cinematic film: poster + scrims.
+  Portrait phones get the portrait still and a scrim that keeps the upper
+  screen clear (the turtle) and darkens where the copy sits. Everywhere else
+  keeps the original left → right scrim behind left-aligned copy.
+*/
+.film-poster {
+  background-image: var(--poster);
+}
+.film-scrim {
+  background: linear-gradient(
+    90deg,
+    rgba(5, 9, 8, 0.55) 0%,
+    rgba(5, 9, 8, 0.28) 45%,
+    rgba(5, 9, 8, 0.18) 100%
+  );
+}
+@media (max-width: 767.98px) and (orientation: portrait) {
+  .film-poster {
+    background-image: var(--poster-mobile);
+  }
+  .film-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(5, 9, 8, 0.35) 0%,
+      rgba(5, 9, 8, 0.05) 18%,
+      rgba(5, 9, 8, 0.1) 38%,
+      rgba(5, 9, 8, 0.45) 62%,
+      rgba(5, 9, 8, 0.65) 100%
+    );
+  }
+}

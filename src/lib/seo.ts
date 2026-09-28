@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { site } from "@/data/site";
+import { serviceGroups, services } from "@/data/services";
 
 const defaultTitle = `${site.name} — ${site.descriptor}`;
 const ogImage = {
@@ -91,13 +92,19 @@ export function organizationJsonLd() {
     ...(site.legalName ? { legalName: site.legalName } : {}),
     ...(site.location ? { location: { "@type": "Place", name: site.location } } : {}),
     slogan: site.tagline,
-    knowsAbout: [
-      "Business consulting",
-      "Custom software development",
-      "Automation and systems integration",
-      "Digital experience design",
-      "Search engine optimization",
-      "Cloud and cost visibility",
-    ],
+    knowsAbout: services.map((s) => s.title),
+    // Mirrors the visible "What we do" section; keep the two in sync via src/data/services.ts.
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "TurtleWorks services",
+      itemListElement: serviceGroups.map((group) => ({
+        "@type": "OfferCatalog",
+        name: group.title,
+        itemListElement: group.services.map((s) => ({
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: s.title, description: s.plain },
+        })),
+      })),
+    },
   };
 }
