@@ -255,9 +255,8 @@
           "waitForSubWorkflow": false
         }
       },
-      "disabled": true,
       "onError": "continueRegularOutput",
-      "notes": "Enable after TW-05 has its Gemini credential and is published, and ENQUIRY_AI_PROCESSOR is set in Vercel."
+      "notes": "Passes each lead to TW-05 (OpenAI) for triage and a draft reply."
     },
     {
       "id": "44bfea2e-4c52-4e2b-a083-a6dd5f285cad",

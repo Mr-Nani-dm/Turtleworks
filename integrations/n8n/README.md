@@ -9,7 +9,7 @@ Instance: https://turtleworks.app.n8n.cloud · timezone Asia/Kolkata · all flow
 | **TW-02 · Leads · Unanswered enquiry reminder (weekdays 09:30 IST)** | Cron `30 9 * * 1-5` | Emails a list of leads still `new` after 20 h; silent when clear | ~22 |
 | **TW-03 · Reports · Weekly lead summary (Mondays 09:00 IST)** | Cron `0 9 * * 1` | Last 7 days: count, by topic, by status, still awaiting reply | ~4 |
 | **TW-04 · Ops · Website health monitor (hourly)** | Every hour | Checks homepage, privacy, sitemap and the enquiry API; emails only on DOWN / RECOVERED (reminder every 6 h while down) | ~720 |
-| **TW-05 · Leads · AI triage & draft reply (Gemini)** | Called by TW-01 (hand-off node, disabled until set up) | Gemini summarises the enquiry, picks a service line, urgency and spam risk, and writes a reply saved to **Gmail → Drafts** (never sent); triage saved to the lead and emailed to the team | 1 per enquiry |
+| **TW-05 · Leads · AI triage & draft reply (OpenAI)** | Called by TW-01 (hand-off node) | OpenAI (`gpt-5.4-mini-2026-03-17`) summarises the enquiry, picks a service line, urgency and spam risk, and writes a reply saved to **Gmail → Drafts** (never sent); triage saved to the lead and emailed to the team | 1 per enquiry |
 | **TW-06 · Reports · Monthly website & business report (1st, 09:00 IST)** | Cron `0 9 1 * *` | Vercel Web Analytics (visitors, page views, top pages, referrers, countries) + enquiries + proposals/invoices for last month | 1 |
 | **TW-07 · Deals · Proposal & invoice follow-ups (daily 09:15 IST)** | Cron `15 9 * * *` | Team digest of overdue / soon-due invoices and proposals due a follow-up; client reminders saved as **Gmail drafts** (never sent) | ~30 |
 
@@ -29,7 +29,7 @@ Deals: n8n → **Data tables → "TW Deals — proposals & invoices"** — add o
 
 ### Credentials to add (in n8n → Credentials)
 
-- **TW-05:** *Google Gemini (PaLM) API* — key from Google AI Studio on a **billing-enabled** project (the free tier may use prompts to improve Google's products). Then set `ENQUIRY_AI_PROCESSOR` in Vercel so `/privacy` discloses it.
+- **TW-05:** *OpenAI* — API key from platform.openai.com with prepaid credit and a monthly budget limit. Keep `ENQUIRY_AI_PROCESSOR=OpenAI API` in Vercel so `/privacy` discloses it.
 - **TW-06:** *Header Auth* — Name `Authorization`, Value `Bearer <Vercel token>`; the token needs access to the team that owns the `turtleworks` project. Web Analytics must be enabled in Vercel and `NEXT_PUBLIC_ENABLE_ANALYTICS=1`.
 
 ## Importing into another instance
@@ -45,7 +45,7 @@ The JSON files use placeholders — replace them after import (or before, with f
 | `__DEALS_TABLE_ID__` | data table created from `tw-deals-table.json` |
 | `__ERROR_WORKFLOW_ID__` | id of TW-00 |
 | `__AI_TRIAGE_WORKFLOW_ID__` | id of TW-05 |
-| `__GEMINI_CREDENTIAL_ID__`, `__VERCEL_TOKEN_CREDENTIAL_ID__` | credentials above |
+| `__OPENAI_CREDENTIAL_ID__`, `__VERCEL_TOKEN_CREDENTIAL_ID__` | credentials above |
 
 ## Notes
 

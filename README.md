@@ -39,7 +39,7 @@ A copy with comments lives in `.env.example`.
 | `NEXT_PUBLIC_LEGAL_NAME` | recommended | Registered/trading entity — footer, privacy notice, JSON-LD |
 | `NEXT_PUBLIC_LOCATION` | recommended | Where you operate from, e.g. "Hyderabad, India" |
 | `NEXT_PUBLIC_BOOKING_URL` | optional | https booking page (Google Calendar appointment schedule, Cal.com, Calendly) — shows "Book a call" |
-| `ENQUIRY_AI_PROCESSOR` | with AI triage | Names the AI service (e.g. `Google Gemini API, paid tier`) and adds the disclosure to `/privacy` |
+| `ENQUIRY_AI_PROCESSOR` | with AI triage | Names the AI service (e.g. `OpenAI API`) and adds the disclosure to `/privacy` |
 | `NEXT_PUBLIC_SITE_URL` | optional | Canonical origin. Defaults to `https://turtleworks.in` |
 | `NEXT_PUBLIC_ENABLE_ANALYTICS` | optional | `1` to load Vercel Web Analytics (enable it in the dashboard first) |
 
