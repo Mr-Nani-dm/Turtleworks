@@ -284,9 +284,8 @@
           "name": "Gmail account 2"
         }
       },
-      "disabled": true,
       "onError": "continueRegularOutput",
-      "notes": "Enable once you've confirmed the sending Gmail account is the company address."
+      "notes": "Auto-reply to the enquirer, sent from the connected company Gmail account."
     }
   ],
   "connections": {
