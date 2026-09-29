@@ -34,18 +34,18 @@ export function CapabilityIndex() {
           </h2>
         </Reveal>
 
-        <div className="mt-14 grid gap-16 md:mt-16 lg:grid-cols-3 lg:gap-10">
+        <div className="mt-14 grid gap-16 md:mt-16 lg:grid-cols-3 lg:grid-rows-[auto_auto_auto] lg:gap-x-10 lg:gap-y-0">
           {serviceGroups.map((group) => (
-            <div key={group.id}>
+            <div key={group.id} className="lg:row-span-3 lg:grid lg:grid-rows-subgrid">
               <h3
                 id={`svc-${group.id}`}
-                className="border-t border-[rgba(220,235,228,0.14)] pt-5 font-display text-2xl font-semibold leading-tight text-ivory"
+                className="border-t border-[rgba(220,235,228,0.14)] pt-5 font-display text-2xl font-semibold leading-tight text-balance text-ivory"
               >
                 {group.title}
               </h3>
               <ul
                 aria-labelledby={`svc-${group.id}`}
-                className="mt-7 grid gap-10 md:grid-cols-2 lg:grid-cols-1 lg:gap-12"
+                className="mt-7 grid gap-10 md:grid-cols-2 lg:row-span-2 lg:grid-cols-1 lg:grid-rows-subgrid lg:gap-y-12"
               >
                 {group.services.map((service) => (
                   <ServiceTile key={service.id} service={service} />

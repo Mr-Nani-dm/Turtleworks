@@ -41,3 +41,6 @@ next-env.d.ts
 
 # large unrelated source media (kept locally, not in repo)
 /_source-media/
+
+# Impeccable design-review snapshots (local)
+/.impeccable/
