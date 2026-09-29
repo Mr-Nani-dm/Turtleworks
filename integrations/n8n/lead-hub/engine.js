@@ -387,7 +387,7 @@ function decide(inbound, prev, now) {
 const now = Date.now();
 const rows = $input.all().map((i) => i.json).filter((r) => r["Lead ID"]);
 const out = [];
-for (const { json: inbound } of $("Normalise inbound").all()) {
+for (const { json: inbound } of $("Tag prospect replies").all().filter((i) => !i.json.outbound_reply)) {
   const prev = rows.find((r) => r["Lookup Key"] === inbound.lookup_key) || null;
   const result = decide(inbound, prev, now);
   if (!result.skip) {

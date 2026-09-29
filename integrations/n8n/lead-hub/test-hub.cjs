@@ -55,7 +55,7 @@ n = normalise([{ lead_id: "TW-X", name: "Asha M", email: "asha@shop.in", message
 t("website: no phone -> email key", n[0].lookup_key === "email:asha@shop.in" && n[0].phone === "");
 
 // ── engine ────────────────────────────────────────────────────────────────────
-const engine = (inbound, prev, now = NOW) => exec("engine.js", prev ? [prev] : [], { "Normalise inbound": [inbound] }, now)[0];
+const engine = (inbound, prev, now = NOW) => exec("engine.js", prev ? [prev] : [], { "Tag prospect replies": [inbound] }, now)[0];
 const inb = (o) => normalise([o])[0];
 const asRow = (d) => ({ ...d.row });
 
@@ -162,6 +162,12 @@ t("instagram lead -> DM reply", d.send.via === "dm" && d.send.body.recipient.id 
 d = engine(inb(wa("I am an existing client, the site is down and I need the invoice", "e1")), null);
 t("support + payment keywords route to all relevant inboxes", d.alert.to.includes("support@turtleworks.in") && d.alert.to.includes("accounts@turtleworks.in") && d.alert.subject.startsWith("Attention needed:"), d.alert.to + " | " + d.alert.subject);
 t("budget extracted", engine(inb(wa("budget is around 5 lakhs", "b1")), null).row["Budget Range"] === "5 lakhs");
+
+// prospect replies belong to the outbound handler (TW-11), never to the hub
+const flagged = { ...inb(wa("YES", "px1")), outbound_reply: true };
+const normal = { ...inb(wa("hello", "px2", "919111111111")), outbound_reply: false };
+const routed = exec("engine.js", [], { "Tag prospect replies": [flagged, normal] }, NOW);
+t("hub ignores flagged prospect replies and still handles real leads", routed.length === 1 && routed[0].row["Lookup Key"] === "phone:919111111111", JSON.stringify(routed.map((x) => x.row && x.row["Lookup Key"])));
 
 // ── follow-up ────────────────────────────────────────────────────────────────
 const fu = (rows, now = NOW) => exec("followup.js", rows, {}, now);

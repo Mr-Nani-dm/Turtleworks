@@ -189,6 +189,30 @@ return { json: { ok, challenge: ok ? String(q["hub.challenge"]) : "" } };`,
     node("Website lead (from TW-01)", "executeWorkflowTrigger", 1.1, [0, 720], { inputSource: "passthrough" }),
 
     code("Normalise inbound", [300, 480], "normalise.js"),
+    node(
+      "Read prospects",
+      "googleSheets",
+      4.5,
+      [560, 900],
+      { resource: "sheet", operation: "read", documentId: SHEET_DOC, sheetName: tab("Prospects"), filtersUI: {}, combineFilters: "AND", options: {} },
+      { credentials: SHEETS, executeOnce: true, alwaysOutputData: true, onError: "continueRegularOutput", notes: "Outbound campaign list. If the Prospects tab does not exist yet, this is skipped and every message is treated as a normal inbound lead." },
+    ),
+    code("Tag prospect replies", [820, 900], "../outreach/tag-prospect-replies.js"),
+    ifNode("Reply from an outbound prospect?", [1080, 900], "={{ $json.outbound_reply }}"),
+    node(
+      "Hand off to outbound replies (TW-11)",
+      "executeWorkflow",
+      1.2,
+      [1340, 900],
+      {
+        source: "database",
+        workflowId: { __rl: true, mode: "id", value: "__OUTBOUND_REPLY_WORKFLOW_ID__" },
+        workflowInputs: { mappingMode: "defineBelow", value: {}, matchingColumns: [], schema: [], attemptToConvertTypes: false, convertFieldsToString: true },
+        mode: "once",
+        options: { waitForSubWorkflow: false },
+      },
+      { onError: "continueRegularOutput" },
+    ),
     readCrm("Read CRM leads", [560, 480]),
     code("Lead engine", [820, 480], "engine.js"),
     ifNode("Duplicate or ignored?", [1080, 480], "={{ $json.skip }}"),
@@ -260,7 +284,10 @@ return { json: { ...d, final_row: d.row_failed, send_result: "failed", send_erro
   link(c, "Meta webhook · messages (POST)", [["Normalise inbound"]]);
   link(c, "Gmail · new enquiry email", [["Normalise inbound"]]);
   link(c, "Website lead (from TW-01)", [["Normalise inbound"]]);
-  link(c, "Normalise inbound", [["Read CRM leads"]]);
+  link(c, "Normalise inbound", [["Read prospects"]]);
+  link(c, "Read prospects", [["Tag prospect replies"]]);
+  link(c, "Tag prospect replies", [["Reply from an outbound prospect?"]]);
+  link(c, "Reply from an outbound prospect?", [["Hand off to outbound replies (TW-11)"], ["Read CRM leads"]]);
   link(c, "Read CRM leads", [["Lead engine"]]);
   link(c, "Lead engine", [["Duplicate or ignored?"]]);
   link(c, "Duplicate or ignored?", [[], ["Log: decision", "Reply needed?"]]);

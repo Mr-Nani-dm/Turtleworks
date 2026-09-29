@@ -1,0 +1,1443 @@
+{
+  "name": "TW-10 · Outreach · Outbound WhatsApp campaign — controlled batches and follow-ups",
+  "nodes": [
+    {
+      "id": "9295e0cc-f1ca-4a0b-aab3-1b3aaeefe1f4",
+      "name": "Hourly 10:00-17:00 IST, Mon-Sat",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10-17 * * 1-6"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b80a5544-b454-46ce-ad3c-cb3a1344ae23",
+      "name": "Read prospects",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__CRM_SHEET_ID__"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Prospects"
+        },
+        "filtersUI": {},
+        "combineFilters": "AND",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "__GSHEETS_CREDENTIAL_ID__",
+          "name": "TW · Google Sheets"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "cffdd51e-ac30-456e-ac3b-91bedad5a921",
+      "name": "Outreach engine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Outbound WhatsApp outreach: decides who to message this run.\n//   new outreach   Status = Outreach Ready, passes every check, within the daily caps\n//   follow-up 1    48 h after the first message, no reply\n//   follow-up 2    120 h after the first message, no reply\n//   close out      168 h after the first message, no reply -> No Response, no more messages\n// Runs Mon-Sat 10:00-18:00 IST only. Follow-ups go before new outreach. Never messages a\n// Do Not Contact number, and never the same phone twice across campaigns.\n\nconst OWNER = \"Narendra\";\nconst CAPS = { firstTouchPerDay: 15, totalPerDay: 20, perRun: 3 };\nconst REQUIRE_CONTACT_BASIS = true;\nconst GRAPH = \"https://graph.facebook.com/v21.0\";\nconst WA_PHONE_NUMBER_ID = \"__WA_PHONE_NUMBER_ID__\";\nconst TEMPLATES = { initial: \"tw_outreach_initial\", fu1: \"tw_outreach_fu1\", fu2: \"tw_outreach_fu2\" };\nconst TEMPLATE_LANG = \"en\";\nconst HOUR = 3600e3;\nconst FOLLOWING = [\"Outreach Sent\", \"Follow-up 1 Due\", \"Follow-up 1 Sent\", \"Follow-up 2 Due\", \"Follow-up 2 Sent\"];\nconst CLAIMS = /\\b(guarantee[sd]?|guaranteed|100\\s?%|assured|number one|no\\.?\\s?1|#1|rank(?:s|ed)? first|double your|triple your|10x)\\b/i;\n\nconst ist = (ms) => new Date(ms + 330 * 60000).toISOString().slice(0, 16).replace(\"T\", \" \");\nconst one = (s, max) => String(s ?? \"\").replace(/[\\r\\n\\t]+/g, \" \").replace(/ {2,}/g, \" \").trim().slice(0, max);\nconst firstOf = (n) => (String(n || \"\").split(/\\s+/)[0] || \"\").replace(/[^\\p{L}'-]/gu, \"\").slice(0, 40) || \"there\";\nconst toPhone = (v) => {\n  let d = String(v ?? \"\").replace(/\\D/g, \"\");\n  if (d.length === 11 && d.startsWith(\"0\")) d = d.slice(1);\n  if (d.length === 10 && /^[6-9]/.test(d)) d = \"91\" + d;\n  return d.length >= 11 && d.length <= 15 ? d : \"\";\n};\nconst yes = (v) => [\"yes\", \"true\", \"1\", \"y\"].includes(String(v ?? \"\").trim().toLowerCase());\nconst RANK = { Hot: 0, Warm: 1, Cold: 2 };\n\nconst texts = {\n  initial: (name, note, biz) =>\n    `Hi ${name}, this is Narendra from TurtleWorks.\\n\\nI noticed ${note}.\\n\\nFor ${biz}, a sharper website and WhatsApp enquiry flow could help turn more visitors into real leads.\\n\\nWould you like us to share a quick sample direction for your business?\\n\\nReply YES if you want to see it.\\nReply NO if it's not relevant.`,\n  fu1: (name, biz) =>\n    `Hi ${name}, just checking once. Would you like a quick sample direction for ${biz}'s website/enquiry flow?\\nYES - send it\\nNO - not relevant`,\n  fu2: (name) =>\n    `Last follow-up from my side, ${name}. If improving your website or enquiry flow becomes relevant later, you can message TurtleWorks anytime. Should I close this for now?`,\n};\nconst template = (to, name, params) => ({\n  messaging_product: \"whatsapp\",\n  to,\n  type: \"template\",\n  template: { name, language: { code: TEMPLATE_LANG }, components: [{ type: \"body\", parameters: params.map((text) => ({ type: \"text\", text })) }] },\n});\n\nconst now = Date.now();\nconst local = new Date(now + 330 * 60000);\nconst weekday = local.getUTCDay();\nconst hour = local.getUTCHours();\nconst windowOpen = weekday !== 0 && hour >= 10 && hour < 18;\nconst dayStart = Math.floor((now + 330 * 60000) / 86400000) * 86400000 - 330 * 60000;\n\nconst rows = $input.all().map((i) => i.json).filter((r) => r[\"Prospect ID\"]);\nconst phoneOf = (r) => toPhone(r.Phone);\nconst dncPhones = new Set(rows.filter((r) => yes(r[\"Do Not Contact\"]) || r.Status === \"Do Not Contact\").map(phoneOf).filter(Boolean));\nconst contacted = new Set(rows.filter((r) => Number(r[\"First Sent Ms\"]) > 0).map(phoneOf).filter(Boolean));\nconst sentToday = rows.filter((r) => Number(r[\"Last Sent Ms\"]) >= dayStart).length;\nconst firstToday = rows.filter((r) => Number(r[\"First Sent Ms\"]) >= dayStart).length;\nlet totalLeft = Math.max(0, CAPS.totalPerDay - sentToday);\nlet firstLeft = Math.max(0, CAPS.firstTouchPerDay - firstToday);\nlet runLeft = CAPS.perRun;\n\nconst out = [];\nconst log = (r, step, result, detail) => ({ Timestamp: ist(now), \"Prospect ID\": r[\"Prospect ID\"], \"Business Name\": r[\"Business Name\"], Step: step, Result: result, Detail: detail });\nconst emit = (action, row, extra = {}) =>\n  out.push({ json: { action, has_send: Boolean(extra.send), row, row_failed: null, send: null, log: log(row, extra.step || action, extra.result || action, extra.detail || row.Status), ...extra } });\n\nconst send = (r, stage) => {\n  const to = phoneOf(r);\n  const name = firstOf(r.Name);\n  const biz = one(r[\"Business Name\"], 80);\n  const first = Number(r[\"First Sent Ms\"]) || now;\n  const url = `${GRAPH}/${WA_PHONE_NUMBER_ID}/messages`;\n  const base = { ...r, Owner: r.Owner || OWNER, \"Lead Type\": \"Outbound\", \"Last Contacted\": ist(now), \"Last Sent Ms\": now, \"Send Error\": \"\" };\n  const row_failed = {\n    ...r,\n    Owner: r.Owner || OWNER,\n    \"Lead Type\": \"Outbound\",\n    Status: \"Human Review\",\n    \"Send Error\": \"Send Failed\",\n    Notes: [r.Notes, `${ist(now)} send failed (${stage})`].filter(Boolean).join(\" | \"),\n  };\n  if (stage === \"initial\") {\n    const note = one(r[\"Personalization Note\"], 200).replace(/[.\\s]+$/, \"\");\n    return {\n      send: { via: \"whatsapp\", url, body: template(to, TEMPLATES.initial, [name, note, biz]) },\n      row: { ...base, Status: \"Outreach Sent\", \"Reply Status\": \"Awaiting\", \"Last Message Sent\": texts.initial(name, note, biz), \"Next Follow-up Date\": ist(now + 48 * HOUR), \"First Sent Ms\": now, \"Follow-up Count\": 0, Priority: r.Priority || \"Cold\" },\n      row_failed,\n    };\n  }\n  if (stage === \"fu1\") {\n    return {\n      send: { via: \"whatsapp\", url, body: template(to, TEMPLATES.fu1, [name, biz]) },\n      row: { ...base, Status: \"Follow-up 1 Sent\", \"Last Message Sent\": texts.fu1(name, biz), \"Next Follow-up Date\": ist(first + 120 * HOUR), \"Follow-up Count\": 1 },\n      row_failed,\n    };\n  }\n  return {\n    send: { via: \"whatsapp\", url, body: template(to, TEMPLATES.fu2, [name]) },\n    row: { ...base, Status: \"Follow-up 2 Sent\", \"Last Message Sent\": texts.fu2(name), \"Next Follow-up Date\": ist(first + 168 * HOUR), \"Follow-up Count\": 2 },\n    row_failed,\n  };\n};\n\n// 1. Follow-ups and close-outs (oldest first)\nconst follow = rows\n  .filter((r) => FOLLOWING.includes(r.Status) && !yes(r[\"Do Not Contact\"]) && !Number(r[\"Last Inbound Ms\"]) && Number(r[\"First Sent Ms\"]) > 0)\n  .sort((a, b) => Number(a[\"First Sent Ms\"]) - Number(b[\"First Sent Ms\"]));\nfor (const r of follow) {\n  const hrs = (now - Number(r[\"First Sent Ms\"])) / HOUR;\n  const fu = Number(r[\"Follow-up Count\"]) || 0;\n  if (hrs >= 168) {\n    emit(\"no_response\", { ...r, Status: \"No Response\", \"Reply Status\": \"No Reply\", \"Next Follow-up Date\": \"\" }, { result: \"no response after 7 days\" });\n    continue;\n  }\n  const stage = hrs >= 120 && fu < 2 ? \"fu2\" : hrs >= 48 && fu < 1 ? \"fu1\" : null;\n  if (!stage) continue;\n  if (windowOpen && totalLeft > 0 && runLeft > 0) {\n    const s = send(r, stage);\n    emit(stage, s.row, { send: s.send, row_failed: s.row_failed, result: `${stage} queued` });\n    totalLeft--;\n    runLeft--;\n  } else {\n    const due = stage === \"fu1\" ? \"Follow-up 1 Due\" : \"Follow-up 2 Due\";\n    if (r.Status !== due) emit(\"due\", { ...r, Status: due }, { result: `${stage} due`, detail: windowOpen ? \"daily cap reached\" : \"outside sending window\" });\n  }\n}\n\n// 2. New outreach\nconst reject = (r, reason) => emit(\"rejected\", { ...r, Status: \"Human Review\", \"Send Error\": reason, Notes: [r.Notes, `${ist(now)} not sent: ${reason}`].filter(Boolean).join(\" | \") }, { result: \"not sent\", detail: reason });\nconst ready = rows\n  .filter((r) => r.Status === \"Outreach Ready\")\n  .sort((a, b) => (RANK[a.Priority] ?? 3) - (RANK[b.Priority] ?? 3));\nconst claimedNow = new Set();\nfor (const r of ready) {\n  const phone = phoneOf(r);\n  if (!phone) { reject(r, \"Invalid or missing phone number\"); continue; }\n  if (dncPhones.has(phone)) { reject(r, \"This number is on the Do Not Contact list\"); continue; }\n  if (contacted.has(phone) || claimedNow.has(phone)) { reject(r, \"This number was already contacted in another row or campaign\"); continue; }\n  if (REQUIRE_CONTACT_BASIS && !one(r[\"Contact Basis\"], 200)) { reject(r, \"Contact Basis is empty (why is it OK to message this business?)\"); continue; }\n  if (one(r[\"Personalization Note\"], 200).length < 15 || !one(r[\"Business Name\"], 80)) { reject(r, \"Personalization Note (15+ characters) and Business Name are required\"); continue; }\n  if (CLAIMS.test(r[\"Personalization Note\"])) { reject(r, \"Personalization Note contains a guarantee or result claim\"); continue; }\n  if (!windowOpen || totalLeft <= 0 || firstLeft <= 0 || runLeft <= 0) continue;\n  const s = send(r, \"initial\");\n  emit(\"initial\", s.row, { send: s.send, row_failed: s.row_failed, result: \"outreach queued\" });\n  claimedNow.add(phone);\n  totalLeft--;\n  firstLeft--;\n  runLeft--;\n}\n\nreturn out;"
+      }
+    },
+    {
+      "id": "4a39cbba-cf1d-44c9-acdf-35c637f4a2f6",
+      "name": "Message to send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2cac3614-56b3-4360-a286-ba81d78c613f",
+              "leftValue": "={{ $json.has_send }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "75a03cd0-73f2-4581-a07a-240ae2a3cfc6",
+      "name": "Send one at a time",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1040,
+        -100
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "3a8097d1-f3a5-467b-aa78-057e27b8ff18",
+      "name": "Send WhatsApp message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.send.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.send.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__WA_TOKEN_CREDENTIAL_ID__",
+          "name": "TW · WhatsApp Cloud API token"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "eafb22e5-755d-4037-af60-87fcf2af20db",
+      "name": "Row after send OK",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        -200
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const d = $('Send one at a time').item.json;\nreturn { json: { ...d, final_row: d.row, send_result: \"sent\", send_error: \"\" } };"
+      }
+    },
+    {
+      "id": "21360ef6-5172-4123-a238-c696758471ba",
+      "name": "Row after send failed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        20
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const d = $('Send one at a time').item.json;\nconst err = $json.error || {};\nconst why = String(err.description || err.message || JSON.stringify(err) || \"unknown\").slice(0, 150);\nreturn { json: { ...d, final_row: { ...d.row_failed, \"Send Error\": \"Send Failed: \" + why }, send_result: \"failed\", send_error: why } };"
+      }
+    },
+    {
+      "id": "b8078b52-2670-4b18-a941-ed05df9a92c6",
+      "name": "Save prospect row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1820,
+        -100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__CRM_SHEET_ID__"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Prospects"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Prospect ID": "={{ $json.final_row[\"Prospect ID\"] }}",
+            "Name": "={{ $json.final_row[\"Name\"] }}",
+            "Business Name": "={{ $json.final_row[\"Business Name\"] }}",
+            "Phone": "={{ $json.final_row[\"Phone\"] }}",
+            "Email": "={{ $json.final_row[\"Email\"] }}",
+            "Niche": "={{ $json.final_row[\"Niche\"] }}",
+            "Location": "={{ $json.final_row[\"Location\"] }}",
+            "Website URL": "={{ $json.final_row[\"Website URL\"] }}",
+            "Instagram URL": "={{ $json.final_row[\"Instagram URL\"] }}",
+            "Source of Prospect": "={{ $json.final_row[\"Source of Prospect\"] }}",
+            "Campaign Name": "={{ $json.final_row[\"Campaign Name\"] }}",
+            "Personalization Note": "={{ $json.final_row[\"Personalization Note\"] }}",
+            "Lead Type": "={{ $json.final_row[\"Lead Type\"] }}",
+            "Status": "={{ $json.final_row[\"Status\"] }}",
+            "Last Message Sent": "={{ $json.final_row[\"Last Message Sent\"] }}",
+            "Last Contacted": "={{ $json.final_row[\"Last Contacted\"] }}",
+            "Next Follow-up Date": "={{ $json.final_row[\"Next Follow-up Date\"] }}",
+            "Reply Status": "={{ $json.final_row[\"Reply Status\"] }}",
+            "Priority": "={{ $json.final_row[\"Priority\"] }}",
+            "Owner": "={{ $json.final_row[\"Owner\"] }}",
+            "Notes": "={{ $json.final_row[\"Notes\"] }}",
+            "Contact Basis": "={{ $json.final_row[\"Contact Basis\"] }}",
+            "Do Not Contact": "={{ $json.final_row[\"Do Not Contact\"] }}",
+            "Follow-up Count": "={{ $json.final_row[\"Follow-up Count\"] }}",
+            "Awaiting Reply": "={{ $json.final_row[\"Awaiting Reply\"] }}",
+            "Send Error": "={{ $json.final_row[\"Send Error\"] }}",
+            "First Sent Ms": "={{ $json.final_row[\"First Sent Ms\"] }}",
+            "Last Sent Ms": "={{ $json.final_row[\"Last Sent Ms\"] }}",
+            "Last Inbound Ms": "={{ $json.final_row[\"Last Inbound Ms\"] }}",
+            "Last Message ID": "={{ $json.final_row[\"Last Message ID\"] }}"
+          },
+          "matchingColumns": [
+            "Prospect ID"
+          ],
+          "schema": [
+            {
+              "id": "Prospect ID",
+              "displayName": "Prospect ID",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Niche",
+              "displayName": "Niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website URL",
+              "displayName": "Website URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Instagram URL",
+              "displayName": "Instagram URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source of Prospect",
+              "displayName": "Source of Prospect",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Campaign Name",
+              "displayName": "Campaign Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Personalization Note",
+              "displayName": "Personalization Note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Type",
+              "displayName": "Lead Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Message Sent",
+              "displayName": "Last Message Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Contacted",
+              "displayName": "Last Contacted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Next Follow-up Date",
+              "displayName": "Next Follow-up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Reply Status",
+              "displayName": "Reply Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Owner",
+              "displayName": "Owner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contact Basis",
+              "displayName": "Contact Basis",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Do Not Contact",
+              "displayName": "Do Not Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow-up Count",
+              "displayName": "Follow-up Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Awaiting Reply",
+              "displayName": "Awaiting Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Send Error",
+              "displayName": "Send Error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "First Sent Ms",
+              "displayName": "First Sent Ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Sent Ms",
+              "displayName": "Last Sent Ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Inbound Ms",
+              "displayName": "Last Inbound Ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Message ID",
+              "displayName": "Last Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "__GSHEETS_CREDENTIAL_ID__",
+          "name": "TW · Google Sheets"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "0262dec8-fa04-4bb5-a7a3-61406697cabd",
+      "name": "Wait between messages",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2080,
+        -100
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ 70 + Math.floor(Math.random() * 71) }}",
+        "unit": "seconds"
+      },
+      "webhookId": "981b5a80-b33a-4ac1-abe4-ce88c9d37c31"
+    },
+    {
+      "id": "21883108-c8e6-400d-a447-964b3883af9d",
+      "name": "Log outreach step",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1820,
+        -260
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__CRM_SHEET_ID__"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Outreach Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $json.log.Timestamp }}",
+            "Prospect ID": "={{ $json.log['Prospect ID'] }}",
+            "Business Name": "={{ $json.log['Business Name'] }}",
+            "Step": "={{ $json.log.Step }}",
+            "Result": "={{ $json.action + ' / ' + $json.send_result }}",
+            "Detail": "={{ $json.send_error || $json.row.Status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Prospect ID",
+              "displayName": "Prospect ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Step",
+              "displayName": "Step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Result",
+              "displayName": "Result",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Detail",
+              "displayName": "Detail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "__GSHEETS_CREDENTIAL_ID__",
+          "name": "TW · Google Sheets"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "ed132ec2-66fb-4934-a6ec-0f5982184248",
+      "name": "Alert: send failed",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1820,
+        140
+      ],
+      "parameters": {
+        "sendTo": "hello@turtleworks.in",
+        "subject": "={{ 'TW-10 alert: WhatsApp send failed - ' + $json.row['Business Name'] }}",
+        "emailType": "text",
+        "message": "={{ 'An outreach WhatsApp message could not be sent.\\n\\nProspect: ' + $json.row['Prospect ID'] + ' (' + $json.row['Business Name'] + ')\\nPhone: ' + $json.row.Phone + '\\nError: ' + $json.send_error + '\\n\\nThe prospect is now Human Review with Send Error set, so it will not be retried automatically. Common causes: template not approved yet, number not on WhatsApp, expired token, or WhatsApp declined a marketing message to this number.' }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "f28faa26-8482-4c2b-afe9-ab07eab0922d",
+      "name": "Alert: CRM update failed",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2080,
+        60
+      ],
+      "parameters": {
+        "sendTo": "hello@turtleworks.in",
+        "subject": "TW-10 alert: could not update the prospect sheet",
+        "emailType": "text",
+        "message": "={{ 'The outreach sender could not write to the Google Sheet.\\n\\nError: ' + ($json.error ? ($json.error.message || JSON.stringify($json.error)) : 'unknown') + '\\n\\nCheck the Prospects tab (column names must match exactly) and the Outreach Log tab, then look at this execution in n8n.' }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "c818b602-8718-4c0a-af2c-a329ddaad9a1",
+      "name": "Row (no message)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        260
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { json: { ...$json, final_row: $json.row, send_result: \"none\", send_error: \"\" } };"
+      }
+    },
+    {
+      "id": "221d9779-4074-4329-a0a4-2acaeda0f248",
+      "name": "Save prospect row (no message)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1300,
+        260
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__CRM_SHEET_ID__"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Prospects"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Prospect ID": "={{ $json.final_row[\"Prospect ID\"] }}",
+            "Name": "={{ $json.final_row[\"Name\"] }}",
+            "Business Name": "={{ $json.final_row[\"Business Name\"] }}",
+            "Phone": "={{ $json.final_row[\"Phone\"] }}",
+            "Email": "={{ $json.final_row[\"Email\"] }}",
+            "Niche": "={{ $json.final_row[\"Niche\"] }}",
+            "Location": "={{ $json.final_row[\"Location\"] }}",
+            "Website URL": "={{ $json.final_row[\"Website URL\"] }}",
+            "Instagram URL": "={{ $json.final_row[\"Instagram URL\"] }}",
+            "Source of Prospect": "={{ $json.final_row[\"Source of Prospect\"] }}",
+            "Campaign Name": "={{ $json.final_row[\"Campaign Name\"] }}",
+            "Personalization Note": "={{ $json.final_row[\"Personalization Note\"] }}",
+            "Lead Type": "={{ $json.final_row[\"Lead Type\"] }}",
+            "Status": "={{ $json.final_row[\"Status\"] }}",
+            "Last Message Sent": "={{ $json.final_row[\"Last Message Sent\"] }}",
+            "Last Contacted": "={{ $json.final_row[\"Last Contacted\"] }}",
+            "Next Follow-up Date": "={{ $json.final_row[\"Next Follow-up Date\"] }}",
+            "Reply Status": "={{ $json.final_row[\"Reply Status\"] }}",
+            "Priority": "={{ $json.final_row[\"Priority\"] }}",
+            "Owner": "={{ $json.final_row[\"Owner\"] }}",
+            "Notes": "={{ $json.final_row[\"Notes\"] }}",
+            "Contact Basis": "={{ $json.final_row[\"Contact Basis\"] }}",
+            "Do Not Contact": "={{ $json.final_row[\"Do Not Contact\"] }}",
+            "Follow-up Count": "={{ $json.final_row[\"Follow-up Count\"] }}",
+            "Awaiting Reply": "={{ $json.final_row[\"Awaiting Reply\"] }}",
+            "Send Error": "={{ $json.final_row[\"Send Error\"] }}",
+            "First Sent Ms": "={{ $json.final_row[\"First Sent Ms\"] }}",
+            "Last Sent Ms": "={{ $json.final_row[\"Last Sent Ms\"] }}",
+            "Last Inbound Ms": "={{ $json.final_row[\"Last Inbound Ms\"] }}",
+            "Last Message ID": "={{ $json.final_row[\"Last Message ID\"] }}"
+          },
+          "matchingColumns": [
+            "Prospect ID"
+          ],
+          "schema": [
+            {
+              "id": "Prospect ID",
+              "displayName": "Prospect ID",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Niche",
+              "displayName": "Niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website URL",
+              "displayName": "Website URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Instagram URL",
+              "displayName": "Instagram URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source of Prospect",
+              "displayName": "Source of Prospect",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Campaign Name",
+              "displayName": "Campaign Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Personalization Note",
+              "displayName": "Personalization Note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Type",
+              "displayName": "Lead Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Message Sent",
+              "displayName": "Last Message Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Contacted",
+              "displayName": "Last Contacted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Next Follow-up Date",
+              "displayName": "Next Follow-up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Reply Status",
+              "displayName": "Reply Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Owner",
+              "displayName": "Owner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contact Basis",
+              "displayName": "Contact Basis",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Do Not Contact",
+              "displayName": "Do Not Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow-up Count",
+              "displayName": "Follow-up Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Awaiting Reply",
+              "displayName": "Awaiting Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Send Error",
+              "displayName": "Send Error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "First Sent Ms",
+              "displayName": "First Sent Ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Sent Ms",
+              "displayName": "Last Sent Ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Inbound Ms",
+              "displayName": "Last Inbound Ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Message ID",
+              "displayName": "Last Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "__GSHEETS_CREDENTIAL_ID__",
+          "name": "TW · Google Sheets"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "94c587e7-cdc4-4d4c-a8e1-04d8b8bea1a5",
+      "name": "Log (no message)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1300,
+        420
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__CRM_SHEET_ID__"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Outreach Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $json.log.Timestamp }}",
+            "Prospect ID": "={{ $json.log['Prospect ID'] }}",
+            "Business Name": "={{ $json.log['Business Name'] }}",
+            "Step": "={{ $json.log.Step }}",
+            "Result": "={{ $json.log.Result }}",
+            "Detail": "={{ $json.log.Detail }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Prospect ID",
+              "displayName": "Prospect ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Step",
+              "displayName": "Step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Result",
+              "displayName": "Result",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Detail",
+              "displayName": "Detail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "__GSHEETS_CREDENTIAL_ID__",
+          "name": "TW · Google Sheets"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "9cde2db4-bc16-495c-a9f7-469ab8674963",
+      "name": "Alert: CRM update failed (no message)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        300
+      ],
+      "parameters": {
+        "sendTo": "hello@turtleworks.in",
+        "subject": "TW-10 alert: could not update the prospect sheet",
+        "emailType": "text",
+        "message": "={{ 'The outreach sender could not write to the Google Sheet.\\n\\nError: ' + ($json.error ? ($json.error.message || JSON.stringify($json.error)) : 'unknown') + '\\n\\nCheck the Prospects tab (column names must match exactly) and the Outreach Log tab, then look at this execution in n8n.' }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Hourly 10:00-17:00 IST, Mon-Sat": {
+      "main": [
+        [
+          {
+            "node": "Read prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read prospects": {
+      "main": [
+        [
+          {
+            "node": "Outreach engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outreach engine": {
+      "main": [
+        [
+          {
+            "node": "Message to send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message to send?": {
+      "main": [
+        [
+          {
+            "node": "Send one at a time",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Row (no message)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send one at a time": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send WhatsApp message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp message": {
+      "main": [
+        [
+          {
+            "node": "Row after send OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Row after send failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row after send OK": {
+      "main": [
+        [
+          {
+            "node": "Save prospect row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log outreach step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row after send failed": {
+      "main": [
+        [
+          {
+            "node": "Save prospect row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log outreach step",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Alert: send failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save prospect row": {
+      "main": [
+        [
+          {
+            "node": "Wait between messages",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: CRM update failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert: CRM update failed": {
+      "main": [
+        [
+          {
+            "node": "Wait between messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait between messages": {
+      "main": [
+        [
+          {
+            "node": "Send one at a time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row (no message)": {
+      "main": [
+        [
+          {
+            "node": "Save prospect row (no message)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log (no message)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save prospect row (no message)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Alert: CRM update failed (no message)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "__ERROR_WORKFLOW_ID__"
+  },
+  "pinData": {}
+}

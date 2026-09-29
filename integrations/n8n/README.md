@@ -14,6 +14,8 @@ Instance: https://turtleworks.app.n8n.cloud · timezone Asia/Kolkata · all flow
 | **TW-07 · Deals · Proposal & invoice follow-ups (daily 09:15 IST)** | Cron `15 9 * * *` | Team digest of overdue / soon-due invoices and proposals due a follow-up; client reminders saved as **Gmail drafts** (never sent) | ~30 |
 | **TW-08 · Leads · Inbound lead hub** | Meta webhook (WhatsApp, Instagram, Facebook), Gmail (shipped off), and TW-01 | One Google Sheets CRM for every channel: 5-question qualification, priority, routed team alerts, human hold, replies on the same channel. See `lead-hub/README.md` | 1 per inbound message |
 | **TW-09 · Leads · Follow-up after 24 h, close out after 3 days** | Cron `5 9-20 * * *` | One polite follow-up, then Not Now after 3 days and a team alert | ~360 |
+| **TW-10 · Outreach · Outbound WhatsApp campaign** | Cron `0 10-17 * * 1-6` | Sends personalised WhatsApp outreach to `Outreach Ready` prospects in capped batches with delays, then follow-ups at 2 and 5 days and No Response at 7. Read the compliance section in `outreach/README.md` first | ~210 |
+| **TW-11 · Outreach · Prospect reply handler** | Called by TW-08 when a WhatsApp sender is a prospect | YES, NO, price and call handling; stops on NO or STOP; alerts the team | 1 per reply |
 
 Lead log: n8n → **Data tables → "TW Leads — website enquiries"**. Status convention: `new` → `replied` → `qualified` → `won` / `lost`. Set `replied` after answering so TW-02 stops reminding.
 
