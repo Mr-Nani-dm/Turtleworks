@@ -1,8 +1,6 @@
 import { CSSProperties, ReactNode } from "react";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
-import { Eyebrow } from "@/components/ui/Eyebrow";
-import { GoldMark } from "@/components/ui/GoldMark";
 import { services } from "@/data/services";
 
 /** CSS-only entrance: paints with the first frame, no hydration needed (LCP-safe). */
@@ -31,16 +29,8 @@ export function Hero() {
       />
       <Container className="relative w-full">
         <div className="max-w-2xl">
-          <Enter className="flex items-center gap-3 sm:gap-4">
-            <GoldMark size={34} className="hidden shrink-0 sm:block" />
-            {/* One line on phones: the mark steps aside and tracking tightens slightly. */}
-            <Eyebrow className="whitespace-nowrap max-sm:[&_.eyebrow]:tracking-[0.16em]">
-              Business Solutions + Technology
-            </Eyebrow>
-          </Enter>
-
-          <Enter delay={60}>
-            <h1 className="mt-6 text-mega font-semibold leading-[0.98]">
+          <Enter>
+            <h1 className="text-mega font-semibold leading-[0.98]">
               Small steps.
               <br />
               <span className="text-mint">Bigger possibilities.</span>

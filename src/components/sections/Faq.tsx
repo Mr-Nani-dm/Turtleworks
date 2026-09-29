@@ -1,5 +1,4 @@
 import { Container } from "@/components/ui/Container";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Plus } from "@/components/ui/Icons";
 import { Reveal } from "@/components/motion/Reveal";
 import { faqs } from "@/data/faq";
@@ -25,8 +24,7 @@ export function Faq() {
       <Container>
         <div className="mx-auto max-w-3xl">
           <Reveal>
-            <Eyebrow>Questions</Eyebrow>
-            <h2 id="faq-title" className="mt-5 text-h2">
+            <h2 id="faq-title" className="text-h2">
               Straight answers.
             </h2>
           </Reveal>

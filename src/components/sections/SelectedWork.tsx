@@ -1,5 +1,4 @@
 import { Container } from "@/components/ui/Container";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/motion/Reveal";
 import { workItems } from "@/data/work";
 
@@ -12,8 +11,7 @@ export function SelectedWork() {
         <Reveal>
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
-              <Eyebrow>{illustrative ? "Engagement examples" : "Selected work"}</Eyebrow>
-              <h2 className="mt-5 max-w-2xl text-h2">
+              <h2 className="max-w-2xl text-h2">
                 {illustrative
                   ? "Problems we're built to solve."
                   : "Outcomes, told through the problem."}
@@ -45,7 +43,6 @@ export function SelectedWork() {
               <Reveal key={item.id} delay={i * 80}>
                 <article className="grid gap-8 rounded-2xl border border-[rgba(220,235,228,0.1)] bg-[rgba(8,19,15,0.72)] p-7 md:p-10 lg:grid-cols-[minmax(10rem,auto)_1fr]">
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 lg:flex-col lg:items-start">
-                    <span className="text-sm font-medium tabular-nums text-gold">{item.index}</span>
                     <span className="text-xs uppercase tracking-[0.2em] text-sage">
                       {item.discipline}
                     </span>

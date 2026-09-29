@@ -1,6 +1,5 @@
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/motion/Reveal";
 import { ContactForm } from "./ContactForm";
 import { nextSteps } from "@/data/engagement";
@@ -29,8 +28,7 @@ export function ContactCTA() {
         <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
           <div>
             <Reveal>
-              <Eyebrow>Contact</Eyebrow>
-              <h2 id="contact-title" className="mt-5 text-h1 font-semibold">
+              <h2 id="contact-title" className="text-h1 font-semibold">
                 Have a problem worth solving?
               </h2>
               <p className="mt-5 text-xl text-ivory-soft">

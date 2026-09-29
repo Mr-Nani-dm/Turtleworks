@@ -1,5 +1,4 @@
 import { Container } from "@/components/ui/Container";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { ArrowRight } from "@/components/ui/Icons";
 import { SectionLink } from "@/components/ui/SectionLink";
 import { Reveal } from "@/components/motion/Reveal";
@@ -14,8 +13,7 @@ export function Engagement() {
     >
       <Container>
         <Reveal className="max-w-2xl">
-          <Eyebrow>How we engage</Eyebrow>
-          <h2 id="engage-title" className="mt-5 text-h2">
+          <h2 id="engage-title" className="text-h2">
             Start small. Commit when it&rsquo;s clear.
           </h2>
           <p className="mt-6 text-ivory-soft">

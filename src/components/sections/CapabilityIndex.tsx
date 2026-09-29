@@ -1,5 +1,4 @@
 import { Container } from "@/components/ui/Container";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/motion/Reveal";
 import { serviceGroups, type Service } from "@/data/services";
@@ -39,8 +38,7 @@ export function CapabilityIndex() {
     <section id="solutions" className="section-solid relative py-24 md:py-36">
       <Container>
         <Reveal>
-          <Eyebrow>What we do</Eyebrow>
-          <h2 className="mt-5 text-h2">
+          <h2 className="text-h2">
             Different problems.
             <br />
             <span className="text-mint">The right solution.</span>

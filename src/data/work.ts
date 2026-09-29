@@ -1,6 +1,5 @@
 export type WorkItem = {
   id: string;
-  index: string;
   discipline: string;
   title: string;
   problem: string;
@@ -19,7 +18,6 @@ export type WorkItem = {
 export const workItems: WorkItem[] = [
   {
     id: "operations-platform",
-    index: "01",
     discipline: "Custom software · Automation",
     title: "Operations spread across spreadsheets",
     problem:
@@ -32,7 +30,6 @@ export const workItems: WorkItem[] = [
   },
   {
     id: "digital-experience",
-    index: "02",
     discipline: "Websites · SEO & GEO",
     title: "A website that undersells the business",
     problem:
@@ -45,7 +42,6 @@ export const workItems: WorkItem[] = [
   },
   {
     id: "cloud-visibility",
-    index: "03",
     discipline: "FinOps · Dashboards",
     title: "Cloud spend nobody can explain",
     problem:

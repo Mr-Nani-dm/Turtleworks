@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { Container } from "@/components/ui/Container";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { ArrowUpRight } from "@/components/ui/Icons";
 import { Reveal } from "@/components/motion/Reveal";
 import { team } from "@/data/team";
@@ -17,8 +16,7 @@ export function Team() {
     >
       <Container>
         <Reveal>
-          <Eyebrow>The people</Eyebrow>
-          <h2 id="team-title" className="mt-5 max-w-2xl text-h2">
+          <h2 id="team-title" className="max-w-2xl text-h2">
             Who you&rsquo;ll actually work with.
           </h2>
         </Reveal>
