@@ -91,6 +91,8 @@ export const heroVideo = {
     mp4: "/videos/turtle-mobile-portrait-v3.mp4",
   },
   poster: "/videos/poster-v2.jpg",
+  posterWebp: "/videos/poster-v2.webp",
   /** Still from the portrait cut: shown on phones before the film loads or when autoplay is blocked (e.g. iOS Low Power Mode). */
   posterMobile: "/videos/poster-mobile-v3.jpg",
+  posterMobileWebp: "/videos/poster-mobile-v3.webp",
 } as const;

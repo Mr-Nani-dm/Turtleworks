@@ -32,6 +32,11 @@ export const faqs: Faq[] = [
       "Yes — connecting what you already run is often the most useful place to start. We look for the smallest change that removes the most friction.",
   },
   {
+    question: "What's the difference between SEO and GEO?",
+    answer:
+      "SEO helps your business show up in Google's search results. GEO (generative engine optimisation) helps it get mentioned and cited in AI answers, such as ChatGPT, Gemini and Google's AI Overviews. Both depend on clear, accurate content about what you do; GEO also favours plain answers to real questions and consistent facts about your business across the web.",
+  },
+  {
     question: "Do you support things after launch?",
     answer:
       "Ongoing improvement can be agreed as part of an engagement: measuring what matters after launch and improving in small steps. It's scoped like everything else.",

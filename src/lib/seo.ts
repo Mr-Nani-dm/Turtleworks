@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { site } from "@/data/site";
 import { serviceGroups, services } from "@/data/services";
 
-const defaultTitle = `${site.name} — ${site.descriptor}`;
+// Names what we do (searchers and AI answers match on services, not taglines); ≤60 chars.
+const defaultTitle = `${site.name} — Websites, SEO & GEO, Automation & Dashboards`;
 const ogImage = {
   url: "/og.jpg",
   width: 1200,

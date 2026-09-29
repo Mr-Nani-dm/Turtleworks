@@ -23,6 +23,11 @@ const LABEL = "Pause background video";
 
 type FilmMode = "off" | "scrub" | "loop";
 
+// Must match the portrait-phone media query in globals.css (.film-poster).
+const PORTRAIT_PHONE = "(max-width: 767.98px) and (orientation: portrait)";
+const posterImage = (webp: string, jpg: string) =>
+  `image-set(url(${webp}) type("image/webp"), url(${jpg}) type("image/jpeg"))`;
+
 // Tiny subscribable store over localStorage for the pause preference.
 let memoryPaused = false;
 const pausePref = {
@@ -163,15 +168,33 @@ export function CinematicBackground() {
         ) : null}
 
         {/* Poster: CSS picks the portrait still on phones, so the right image
-            shows even before hydration and whenever autoplay is blocked. */}
+            shows even before hydration and whenever autoplay is blocked. It's
+            the LCP element, so each still is preloaded for the screens that
+            show it (a CSS background is otherwise found late). */}
+        <link
+          rel="preload"
+          as="image"
+          type="image/webp"
+          href={heroVideo.posterMobileWebp}
+          media={PORTRAIT_PHONE}
+          fetchPriority="high"
+        />
+        <link
+          rel="preload"
+          as="image"
+          type="image/webp"
+          href={heroVideo.posterWebp}
+          media={`not all and ${PORTRAIT_PHONE}`}
+          fetchPriority="high"
+        />
         <div
           className={`film-poster film-frame absolute inset-x-0 top-0 h-full bg-cover bg-center transition-opacity duration-1000 ${
             mode === "off" || !ready ? "opacity-100" : "opacity-0"
           }`}
           style={
             {
-              "--poster": `url(${heroVideo.poster})`,
-              "--poster-mobile": `url(${heroVideo.posterMobile})`,
+              "--poster": posterImage(heroVideo.posterWebp, heroVideo.poster),
+              "--poster-mobile": posterImage(heroVideo.posterMobileWebp, heroVideo.posterMobile),
             } as CSSProperties
           }
         />

@@ -20,7 +20,7 @@ export const workItems: WorkItem[] = [
   {
     id: "operations-platform",
     index: "01",
-    discipline: "Software · Automation",
+    discipline: "Custom software · Automation",
     title: "Operations spread across spreadsheets",
     problem:
       "A growing team runs core operations across spreadsheets and disconnected tools, with no single source of truth.",
@@ -33,7 +33,7 @@ export const workItems: WorkItem[] = [
   {
     id: "digital-experience",
     index: "02",
-    discipline: "Digital Experience · SEO",
+    discipline: "Websites · SEO & GEO",
     title: "A website that undersells the business",
     problem:
       "An established business has a web presence that doesn't reflect the quality of its work or help buyers understand it.",
@@ -46,7 +46,7 @@ export const workItems: WorkItem[] = [
   {
     id: "cloud-visibility",
     index: "03",
-    discipline: "Cloud · Cost Visibility",
+    discipline: "FinOps · Dashboards",
     title: "Cloud spend nobody can explain",
     problem:
       "Cloud costs have grown opaque, and the people accountable for them lack a clear view of where the money goes.",
