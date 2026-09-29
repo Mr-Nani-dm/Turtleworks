@@ -1,6 +1,7 @@
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/motion/Reveal";
+import { ServiceIcon } from "@/components/ui/ServiceIcon";
 import { serviceGroups, type Service } from "@/data/services";
 
 /*
@@ -13,17 +14,26 @@ import { serviceGroups, type Service } from "@/data/services";
 
 function ServiceCard({ service }: { service: Service }) {
   return (
-    <li className="flex flex-col rounded-2xl border border-[rgba(220,235,228,0.12)] bg-[rgba(8,19,15,0.72)] p-6 md:p-7">
-      <h4 className="flex items-start gap-3 font-display text-lg font-semibold leading-snug text-ivory md:text-xl">
-        <span aria-hidden className="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-amber" />
-        {service.title}
-      </h4>
-      <p className="mt-3 leading-relaxed text-ivory-soft">{service.plain}</p>
+    <li
+      className="group flex flex-col rounded-2xl border border-[rgba(220,235,228,0.12)] bg-[rgba(8,19,15,0.72)] p-6 transition duration-300 ease-out hover:-translate-y-1 hover:border-[rgba(232,183,106,0.45)] hover:bg-[rgba(10,24,18,0.82)] hover:shadow-[0_18px_44px_-24px_rgba(0,0,0,0.9)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 md:p-7"
+    >
+      <div className="flex items-start gap-4">
+        <span
+          aria-hidden
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[rgba(220,235,228,0.14)] bg-[rgba(220,235,228,0.04)] text-ivory-soft transition-colors duration-300 group-hover:border-[rgba(232,183,106,0.4)] group-hover:text-amber"
+        >
+          <ServiceIcon id={service.id} className="h-5 w-5" />
+        </span>
+        <h4 className="mt-1 font-display text-lg font-semibold leading-snug text-ivory md:text-xl">
+          {service.title}
+        </h4>
+      </div>
+      <p className="mt-4 leading-relaxed text-ivory-soft">{service.plain}</p>
       <ul className="mt-5 flex flex-wrap gap-2" aria-label={`${service.title}: examples`}>
         {service.examples.map((e) => (
           <li
             key={e}
-            className="whitespace-nowrap rounded-full border border-[rgba(220,235,228,0.16)] px-3 py-1 text-xs text-ivory-soft"
+            className="whitespace-nowrap rounded-full border border-[rgba(220,235,228,0.16)] px-3 py-1 text-xs text-ivory-soft transition-colors duration-300 group-hover:border-[rgba(220,235,228,0.28)]"
           >
             {e}
           </li>
