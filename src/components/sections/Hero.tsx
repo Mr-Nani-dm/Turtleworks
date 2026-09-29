@@ -1,7 +1,6 @@
 import { CSSProperties, ReactNode } from "react";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
-import { services } from "@/data/services";
 
 /** CSS-only entrance: paints with the first frame, no hydration needed (LCP-safe). */
 function Enter({ delay = 0, className = "", children }: { delay?: number; className?: string; children: ReactNode }) {
@@ -30,18 +29,16 @@ export function Hero() {
       <Container className="relative w-full">
         <div className="max-w-2xl">
           <Enter>
-            <h1 className="text-mega font-semibold leading-[0.98]">
-              Small steps.
-              <br />
-              <span className="text-mint">Bigger possibilities.</span>
+            <h1 className="text-mega font-semibold leading-[1.02]">
+              Websites, automation and software that{" "}
+              <span className="text-mint">move your business forward.</span>
             </h1>
           </Enter>
 
           <Enter delay={140}>
             <p className="mt-7 max-w-xl text-lg leading-relaxed text-ivory-soft">
-              We build websites, get you found on Google and AI search, automate
-              WhatsApp and everyday work, and create dashboards and custom software.
-              Always starting with the problem you actually need solved.
+              We help you get found, run with less effort, and see your numbers
+              clearly — starting with the problem you actually need solved.
             </p>
           </Enter>
 
@@ -54,22 +51,6 @@ export function Hero() {
                 Start a conversation
               </Button>
             </div>
-          </Enter>
-
-          <Enter delay={300}>
-            <ul
-              aria-label="What we do"
-              className="mt-10 hidden max-w-xl flex-wrap items-center gap-x-3 gap-y-2 text-sm text-ivory-muted md:flex"
-            >
-              {services.map((s, i) => (
-                <li key={s.id} className="flex items-center gap-3">
-                  {i > 0 ? (
-                    <span aria-hidden className="h-1 w-1 rounded-full bg-amber/70" />
-                  ) : null}
-                  {s.short}
-                </li>
-              ))}
-            </ul>
           </Enter>
         </div>
       </Container>

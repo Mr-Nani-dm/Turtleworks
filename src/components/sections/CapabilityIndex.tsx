@@ -44,8 +44,8 @@ export function CapabilityIndex() {
             <span className="text-mint">The right solution.</span>
           </h2>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ivory-soft">
-            Websites, search, marketing, branding, WhatsApp and business automation, custom
-            software and dashboards. Here is what each one does for your business, in plain words.
+            Grouped by the outcome you&apos;re after. Here is what each one does for
+            your business, in plain words.
           </p>
         </Reveal>
 
