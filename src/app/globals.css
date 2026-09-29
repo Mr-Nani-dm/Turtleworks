@@ -417,17 +417,39 @@
     opacity: 0;
     transform: translateY(10px);
   }
+  .gv-fly {
+    transition:
+      opacity 0.6s var(--ease-emphasis),
+      transform 0.7s var(--ease-emphasis);
+    transition-delay: var(--d, 0ms);
+  }
+  .gv-strike {
+    transform-origin: left;
+    transition: transform 0.5s var(--ease-emphasis);
+    transition-delay: var(--d, 0ms);
+  }
   .js .gv:not(.gv--play) .gv-bar {
     transform: scaleY(0.12);
   }
+  .js .gv:not(.gv--play) .gv-fly {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  .js .gv:not(.gv--play) .gv-strike {
+    transform: scaleX(0);
+  }
   @media (prefers-reduced-motion: reduce) {
     .js .gv:not(.gv--play) .gv-step,
-    .js .gv:not(.gv--play) .gv-bar {
+    .js .gv:not(.gv--play) .gv-bar,
+    .js .gv:not(.gv--play) .gv-fly,
+    .js .gv:not(.gv--play) .gv-strike {
       opacity: 1;
       transform: none;
     }
     .gv-step,
-    .gv-bar {
+    .gv-bar,
+    .gv-fly,
+    .gv-strike {
       transition: none;
     }
   }

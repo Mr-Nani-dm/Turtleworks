@@ -93,7 +93,7 @@ export function organizationJsonLd() {
     ...(site.legalName ? { legalName: site.legalName } : {}),
     ...(site.location ? { location: { "@type": "Place", name: site.location } } : {}),
     slogan: site.tagline,
-    knowsAbout: services.map((s) => s.title),
+    knowsAbout: services.flatMap((s) => s.includes),
     // Mirrors the visible "What we do" section; keep the two in sync via src/data/services.ts.
     hasOfferCatalog: {
       "@type": "OfferCatalog",

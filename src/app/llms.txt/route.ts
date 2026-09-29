@@ -21,8 +21,9 @@ export function GET() {
     ...serviceGroups.flatMap((group) => [
       "",
       `### ${group.title}`,
+      group.summary,
       ...group.services.map(
-        (s) => `- **${s.title}**: ${s.plain} (Includes: ${s.examples.join(", ")}.)`,
+        (s) => `- **${s.title}**: ${s.plain} (Includes: ${s.includes.join(", ")}.)`,
       ),
     ]),
     "",
