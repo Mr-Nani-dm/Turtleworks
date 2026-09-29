@@ -1,0 +1,241 @@
+{
+  "version": 3,
+  "source": "src/data/services.ts — keep categories in sync with the website's service catalogue",
+  "brandTags": [
+    "#TurtleWorks"
+  ],
+  "regionTags": [
+    "#MSMEIndia",
+    "#StartupIndia"
+  ],
+  "tagRules": {
+    "linkedin": "3-5 tags: 2-3 category tags + #TurtleWorks + 1 region tag",
+    "instagram": "8-12 tags: category tags + brand + region, re-checked for relevance at post time",
+    "x": "1-2 tags"
+  },
+  "topicScoring": {
+    "serviceFit": 30,
+    "buyerIntent": 25,
+    "trendMomentum": 20,
+    "contentGap": 15,
+    "searchAndGeoDemand": 10
+  },
+  "carousel": {
+    "size": "1080x1350",
+    "slides": [
+      "Hook (max ~10 words)",
+      "The problem, in the reader's words",
+      "Insight 1 (max ~25 words)",
+      "Insight 2 (max ~25 words)",
+      "Insight 3 (max ~25 words)",
+      "Insight 4 (max ~25 words)",
+      "Summary / checklist worth saving",
+      "Call to action: turtleworks.in + WhatsApp"
+    ],
+    "rules": [
+      "No invented statistics",
+      "Cite sources for claims",
+      "Rendered from the brand template, not AI-generated text"
+    ]
+  },
+  "groups": [
+    {
+      "id": "grow",
+      "title": "Get found and win customers",
+      "categories": [
+        {
+          "id": "website",
+          "label": "A website that brings enquiries",
+          "covers": [
+            "Websites",
+            "Branding"
+          ],
+          "tags": [
+            "#WebDesign",
+            "#WebsiteDevelopment",
+            "#SmallBusinessWebsite",
+            "#LandingPage",
+            "#MobileFirst",
+            "#UXDesign",
+            "#Branding",
+            "#BrandIdentity",
+            "#LogoDesign",
+            "#SocialMediaDesign",
+            "#CreativeDesign",
+            "#ShortVideo"
+          ],
+          "pillarTopics": [
+            "5 website fixes that bring more enquiries",
+            "Why your site is slow on Indian mobile networks, and how to fix it",
+            "What every small-business homepage must say in the first 5 seconds",
+            "Redesign or refresh? How to decide",
+            "Forms that convert: fewer fields, clear next steps",
+            "Consistency beats cleverness: building a recognisable brand",
+            "What a small business needs in a brand kit",
+            "Posters that get noticed in a busy feed",
+            "Short videos on a small budget: what works",
+            "When is it time to refresh your logo?"
+          ]
+        },
+        {
+          "id": "get-found",
+          "label": "Get found on Google, AI and social",
+          "covers": [
+            "SEO & GEO",
+            "Digital marketing"
+          ],
+          "tags": [
+            "#SEO",
+            "#GEO",
+            "#GenerativeEngineOptimization",
+            "#LocalSEO",
+            "#AISearch",
+            "#LeadGeneration",
+            "#DigitalMarketing",
+            "#DigitalMarketingIndia",
+            "#GoogleAds",
+            "#SocialMediaMarketing",
+            "#PerformanceMarketing",
+            "#ContentMarketing"
+          ],
+          "pillarTopics": [
+            "GEO: how to get cited by ChatGPT and Gemini, and how it differs from SEO",
+            "Google Business Profile checklist for local businesses",
+            "Technical SEO in 7 checks you can do today",
+            "Turning search visits into enquiries, not just traffic",
+            "Content that ranks without a blog team",
+            "Measure campaigns by enquiries, not likes",
+            "A simple monthly content plan for a small team",
+            "Google Ads vs Meta Ads for local businesses",
+            "The 3 numbers every small-business campaign should track",
+            "Why boosting posts rarely brings customers, and what to do instead"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "run",
+      "title": "Run your business with less effort",
+      "categories": [
+        {
+          "id": "automation",
+          "label": "WhatsApp and admin that run themselves",
+          "covers": [
+            "WhatsApp automation",
+            "Automation"
+          ],
+          "tags": [
+            "#WhatsAppAutomation",
+            "#WhatsAppBusiness",
+            "#Chatbot",
+            "#CustomerSupport",
+            "#ConversationalAI",
+            "#SmallBusinessTips",
+            "#BusinessAutomation",
+            "#WorkflowAutomation",
+            "#AIAutomation",
+            "#n8n",
+            "#Productivity",
+            "#NoCode"
+          ],
+          "pillarTopics": [
+            "Auto-replies that answer common questions at 11 pm",
+            "What Meta allows on WhatsApp bots, and what it doesn't",
+            "Never lose a WhatsApp enquiry again: tracking and follow-ups",
+            "WhatsApp automation for clinics, salons and shops",
+            "Bot or human? Designing the hand-over",
+            "10 repetitive tasks every small business can automate this month",
+            "Invoices and payment reminders on autopilot",
+            "Working out automation ROI in hours saved",
+            "When not to automate",
+            "AI agents vs simple workflows: start with the boring one"
+          ]
+        },
+        {
+          "id": "software",
+          "label": "An app built for how you work",
+          "covers": [
+            "Custom software"
+          ],
+          "tags": [
+            "#CustomSoftware",
+            "#SoftwareDevelopment",
+            "#InternalTools",
+            "#BookingSystem",
+            "#InventoryManagement",
+            "#MVP"
+          ],
+          "pillarTopics": [
+            "Signs you've outgrown Excel, and what to build instead",
+            "Booking, orders, stock: build or buy?",
+            "What a proper handover includes, so you're never locked in",
+            "MVP vs version 1: what to cut first",
+            "The maintenance costs nobody mentions upfront"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "see",
+      "title": "See clearly and decide faster",
+      "categories": [
+        {
+          "id": "dashboards",
+          "label": "Your numbers on one screen",
+          "covers": [
+            "Dashboards",
+            "FinOps"
+          ],
+          "tags": [
+            "#BusinessDashboard",
+            "#DataVisualization",
+            "#BusinessIntelligence",
+            "#KPI",
+            "#PowerBI",
+            "#DataDriven",
+            "#FinOps",
+            "#CloudCostOptimization",
+            "#Azure",
+            "#CloudComputing",
+            "#CostOptimization",
+            "#CloudCost"
+          ],
+          "pillarTopics": [
+            "The one-screen dashboard every owner should check daily",
+            "From scattered spreadsheets to live numbers",
+            "Which 5 KPIs actually matter for a small business",
+            "Tracking leads from first message to paid invoice",
+            "Dashboards people actually open: design rules",
+            "7 places your Azure bill leaks money",
+            "Read your cloud bill in 10 minutes",
+            "Showing each team what its cloud spend is",
+            "Spend alerts that catch surprises before month-end",
+            "FinOps for teams without a FinOps team"
+          ]
+        },
+        {
+          "id": "plan",
+          "label": "A clear plan before you spend",
+          "covers": [
+            "Consulting"
+          ],
+          "tags": [
+            "#BusinessConsulting",
+            "#DigitalTransformation",
+            "#TechStrategy",
+            "#SMEGrowth",
+            "#ProblemSolving",
+            "#TechConsulting"
+          ],
+          "pillarTopics": [
+            "Before you buy software: 5 questions that save lakhs",
+            "Build vs buy vs automate: a simple decision framework",
+            "How to describe your problem so a tech partner can help",
+            "Tool sprawl: the hidden cost of too many apps",
+            "Why transformation projects stall, and the smallest first step"
+          ]
+        }
+      ]
+    }
+  ]
+}

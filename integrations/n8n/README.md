@@ -51,6 +51,7 @@ The JSON files use placeholders — replace them after import (or before, with f
 
 - The website waits up to 8 s for TW-01, so the team email and the website confirmation come first; logging and the auto-reply run after the response.
 - AI output is validated (allowed values only, lengths capped) and never sent to anyone automatically; the enquiry is passed as untrusted content.
-- `topic_hint` is a keyword guess against the six service lines — a triage aid, not a classification.
+- `topic_hint` (TW-01) and `service_fit` (TW-05) use the six services in `src/data/services.ts` (short labels: Website, Get found, WhatsApp & automation, Custom app, Dashboards, Plan); update both flows when that catalogue changes. `topic_hint` is a keyword guess — a triage aid, not a classification.
+- Content-engine categories, tags and pillar topics live in `integrations/content/content-taxonomy.json`.
 - TW-04 is the largest consumer of executions. Moving uptime checks to a free external monitor saves ~720 runs/month.
 - `turtleworks-contact-workflow.json` is the original single-step version, superseded by TW-01.
