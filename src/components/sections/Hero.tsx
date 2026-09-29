@@ -27,9 +27,9 @@ export function Hero() {
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,transparent_32%,rgba(5,9,8,0.45)_48%,rgba(5,9,8,0.6)_100%)] md:bg-none md:bg-[rgba(5,9,8,0.52)] lg:bg-transparent lg:bg-[radial-gradient(ellipse_62%_78%_at_24%_52%,rgba(5,9,8,0.74),rgba(5,9,8,0.36)_58%,transparent_82%)]"
       />
       <Container className="relative w-full">
-        <div className="max-w-2xl">
+        <div className="max-w-3xl">
           <Enter>
-            <h1 className="text-mega font-semibold leading-[1.02]">
+            <h1 className="text-h1 font-semibold leading-[1.04]">
               Websites, automation and software that{" "}
               <span className="text-mint">move your business forward.</span>
             </h1>

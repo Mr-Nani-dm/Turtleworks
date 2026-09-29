@@ -2,6 +2,7 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/motion/Reveal";
 import { ServiceIcon } from "@/components/ui/ServiceIcon";
+import { GroupVisual } from "@/components/sections/GroupVisual";
 import { serviceGroups, type Service } from "@/data/services";
 
 /*
@@ -65,12 +66,15 @@ export function CapabilityIndex() {
               key={group.id}
               className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,2fr)] lg:gap-14"
             >
-              <Reveal className="lg:sticky lg:top-28 lg:self-start">
-                <h3 id={`svc-${group.id}`} className="text-h3">
-                  {group.title}
-                </h3>
-                <p className="mt-3 max-w-sm text-ivory-muted">{group.summary}</p>
-              </Reveal>
+              <div className="lg:sticky lg:top-28 lg:self-start">
+                <Reveal>
+                  <h3 id={`svc-${group.id}`} className="text-h3">
+                    {group.title}
+                  </h3>
+                  <p className="mt-3 max-w-sm text-ivory-muted">{group.summary}</p>
+                </Reveal>
+                <GroupVisual id={group.id} />
+              </div>
 
               <ul
                 aria-labelledby={`svc-${group.id}`}
