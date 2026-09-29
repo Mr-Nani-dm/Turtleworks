@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { CSSProperties, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useIsClient, useMediaQuery } from "@/hooks/useMediaQuery";
 import { useScrollVideo } from "@/hooks/useScrollVideo";
@@ -87,13 +87,15 @@ export function FilmToggle({ className = "" }: { className?: string }) {
 export function CinematicBackground() {
   const mode = useFilmMode();
   const userPaused = usePaused();
+  const portrait = useMediaQuery("(orientation: portrait)");
   const videoRef = useRef<HTMLVideoElement>(null);
   const [readySrc, setReadySrc] = useState<string | null>(null);
   const [nearForm, setNearForm] = useState(false);
   const [controlFocused, setControlFocused] = useState(false);
 
   const looping = mode === "loop";
-  const sources = mode === "scrub" ? heroVideo.desktop : heroVideo.mobile;
+  const sources =
+    mode === "scrub" ? heroVideo.desktop : portrait ? heroVideo.mobilePortrait : heroVideo.mobile;
   const ready = readySrc === sources.mp4;
   // The control steps aside over the contact form so it can't cover the
   // submit button — but never while it has keyboard focus.
@@ -143,7 +145,7 @@ export function CinematicBackground() {
           <video
             key={sources.mp4}
             ref={videoRef}
-            className={`h-full w-full object-cover transition-opacity duration-1000 ${
+            className={`film-frame absolute inset-x-0 top-0 h-full w-full object-cover transition-opacity duration-1000 ${
               ready ? "opacity-100" : "opacity-0"
             }`}
             preload={looping && userPaused ? "none" : "auto"}
@@ -160,20 +162,24 @@ export function CinematicBackground() {
           </video>
         ) : null}
 
+        {/* Poster: CSS picks the portrait still on phones, so the right image
+            shows even before hydration and whenever autoplay is blocked. */}
         <div
-          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
+          className={`film-poster film-frame absolute inset-x-0 top-0 h-full bg-cover bg-center transition-opacity duration-1000 ${
             mode === "off" || !ready ? "opacity-100" : "opacity-0"
           }`}
-          style={{ backgroundImage: `url(${heroVideo.poster})` }}
+          style={
+            {
+              "--poster": `url(${heroVideo.poster})`,
+              "--poster-mobile": `url(${heroVideo.posterMobile})`,
+            } as CSSProperties
+          }
         />
 
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(5,9,8,0.55) 0%, rgba(5,9,8,0.28) 45%, rgba(5,9,8,0.18) 100%)",
-          }}
-        />
+        {/* Legibility scrims. Desktop: copy sits left, so darken left → right.
+            Phones: copy sits low, so keep the top clear for the turtle and
+            darken towards the bottom. */}
+        <div className="film-scrim absolute inset-0" />
         <div
           className="absolute inset-x-0 bottom-0 h-1/3"
           style={{ background: "linear-gradient(to top, rgba(5,9,8,0.8), rgba(5,9,8,0))" }}

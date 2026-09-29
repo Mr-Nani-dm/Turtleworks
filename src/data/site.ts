@@ -36,7 +36,7 @@ export const site = {
   legalName: clean(process.env.NEXT_PUBLIC_LEGAL_NAME),
   location: clean(process.env.NEXT_PUBLIC_LOCATION),
   description:
-    "TurtleWorks is a business solutions and technology partner. We understand the problem first, then design the right mix of technology, automation, digital experience and business solutions around what you actually need.",
+    "TurtleWorks builds websites, SEO & GEO, WhatsApp and business automation, dashboards and custom software. We start with your problem and recommend only what fits.",
 } as const;
 
 export const nav = [
@@ -76,9 +76,21 @@ export const heroVideo = {
     webm: "/videos/turtle-desktop-v2.webm",
     mp4: "/videos/turtle-desktop-v2.mp4",
   },
+  /** Landscape phones: short, wide screens keep the 16:9 cut. */
   mobile: {
     webm: "/videos/turtle-mobile-v2.webm",
     mp4: "/videos/turtle-mobile-v2.mp4",
   },
+  /**
+   * Portrait phones: a 608×1080 cut from the 1080p master whose crop pans
+   * with the turtle, so its head and shell stay in frame. A centre crop of
+   * the 16:9 film showed mostly empty water on a tall screen.
+   */
+  mobilePortrait: {
+    webm: "/videos/turtle-mobile-portrait-v3.webm",
+    mp4: "/videos/turtle-mobile-portrait-v3.mp4",
+  },
   poster: "/videos/poster-v2.jpg",
+  /** Still from the portrait cut: shown on phones before the film loads or when autoplay is blocked (e.g. iOS Low Power Mode). */
+  posterMobile: "/videos/poster-mobile-v3.jpg",
 } as const;
