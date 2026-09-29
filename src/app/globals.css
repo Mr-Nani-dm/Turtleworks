@@ -432,14 +432,25 @@
   .film-poster {
     background-image: var(--poster-mobile);
   }
+  /* The film fills the top of the screen and fades into the abyss, so the
+     turtle sits above the copy instead of behind it (headline contrast). */
+  .film-frame {
+    height: 64svh;
+    /* Anchor the frame low so the turtle rides in the upper quarter. */
+    object-position: 50% 100%;
+    background-position: 50% 100%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 62%, transparent 100%);
+  }
   .film-scrim {
     background: linear-gradient(
       180deg,
-      rgba(5, 9, 8, 0.35) 0%,
-      rgba(5, 9, 8, 0.05) 18%,
-      rgba(5, 9, 8, 0.1) 38%,
-      rgba(5, 9, 8, 0.45) 62%,
-      rgba(5, 9, 8, 0.65) 100%
+      rgba(5, 9, 8, 0.4) 0%,
+      rgba(5, 9, 8, 0.05) 12%,
+      rgba(5, 9, 8, 0.08) 24%,
+      rgba(5, 9, 8, 0.62) 31%,
+      rgba(5, 9, 8, 0.82) 44%,
+      rgba(5, 9, 8, 0.82) 100%
     );
   }
 }

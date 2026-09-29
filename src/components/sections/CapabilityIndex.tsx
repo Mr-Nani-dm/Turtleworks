@@ -24,7 +24,7 @@ function ServiceCard({ service }: { service: Service }) {
         {service.examples.map((e) => (
           <li
             key={e}
-            className="rounded-full border border-[rgba(220,235,228,0.16)] px-3 py-1 text-xs text-ivory-soft"
+            className="whitespace-nowrap rounded-full border border-[rgba(220,235,228,0.16)] px-3 py-1 text-xs text-ivory-soft"
           >
             {e}
           </li>

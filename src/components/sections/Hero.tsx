@@ -27,13 +27,16 @@ export function Hero() {
           starts clear and deepens where the copy sits. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,transparent_28%,rgba(5,9,8,0.5)_52%,rgba(5,9,8,0.72)_100%)] md:bg-none md:bg-[rgba(5,9,8,0.52)] lg:bg-transparent lg:bg-[radial-gradient(ellipse_62%_78%_at_24%_52%,rgba(5,9,8,0.74),rgba(5,9,8,0.36)_58%,transparent_82%)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,transparent_32%,rgba(5,9,8,0.45)_48%,rgba(5,9,8,0.6)_100%)] md:bg-none md:bg-[rgba(5,9,8,0.52)] lg:bg-transparent lg:bg-[radial-gradient(ellipse_62%_78%_at_24%_52%,rgba(5,9,8,0.74),rgba(5,9,8,0.36)_58%,transparent_82%)]"
       />
       <Container className="relative w-full">
         <div className="max-w-2xl">
-          <Enter className="flex items-center gap-4">
-            <GoldMark size={34} />
-            <Eyebrow>Business Solutions + Technology</Eyebrow>
+          <Enter className="flex items-center gap-3 sm:gap-4">
+            <GoldMark size={34} className="hidden shrink-0 sm:block" />
+            {/* One line on phones: the mark steps aside and tracking tightens slightly. */}
+            <Eyebrow className="whitespace-nowrap max-sm:[&_.eyebrow]:tracking-[0.16em]">
+              Business Solutions + Technology
+            </Eyebrow>
           </Enter>
 
           <Enter delay={60}>

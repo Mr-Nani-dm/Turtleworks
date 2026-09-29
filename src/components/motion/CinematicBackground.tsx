@@ -145,7 +145,7 @@ export function CinematicBackground() {
           <video
             key={sources.mp4}
             ref={videoRef}
-            className={`h-full w-full object-cover transition-opacity duration-1000 ${
+            className={`film-frame absolute inset-x-0 top-0 h-full w-full object-cover transition-opacity duration-1000 ${
               ready ? "opacity-100" : "opacity-0"
             }`}
             preload={looping && userPaused ? "none" : "auto"}
@@ -165,7 +165,7 @@ export function CinematicBackground() {
         {/* Poster: CSS picks the portrait still on phones, so the right image
             shows even before hydration and whenever autoplay is blocked. */}
         <div
-          className={`film-poster absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
+          className={`film-poster film-frame absolute inset-x-0 top-0 h-full bg-cover bg-center transition-opacity duration-1000 ${
             mode === "off" || !ready ? "opacity-100" : "opacity-0"
           }`}
           style={
