@@ -8,7 +8,8 @@
   NEXT_PUBLIC_BOOKING_URL    https booking page (Google Calendar, Cal.com, Calendly)
   NEXT_PUBLIC_LEGAL_NAME     registered / trading entity, e.g. "TurtleWorks Ltd"
   NEXT_PUBLIC_LOCATION       where you operate from, e.g. "Hyderabad, India"
-  NEXT_PUBLIC_WHATSAPP_NUMBER business WhatsApp with country code, e.g. "+91 98xxx xxxxx"
+  NEXT_PUBLIC_WHATSAPP_NUMBER business WhatsApp with country code, e.g. "+91 84999 89116"
+                              (a bare 10-digit Indian mobile gets +91 added)
 */
 
 const clean = (value: string | undefined) => {
@@ -17,8 +18,9 @@ const clean = (value: string | undefined) => {
 };
 
 const whatsappUrl = (value: string | undefined) => {
-  const digits = clean(value)?.replace(/[\s()+-]/g, "");
-  if (!digits || !/^\d{10,15}$/.test(digits)) return null;
+  const raw = clean(value)?.replace(/[\s()+-]/g, "");
+  const digits = raw && /^[6-9]\d{9}$/.test(raw) ? `91${raw}` : raw;
+  if (!digits || !/^\d{11,15}$/.test(digits)) return null;
   const greeting = "Hi TurtleWorks, I'd like to talk about a problem in my business.";
   return `https://wa.me/${digits}?text=${encodeURIComponent(greeting)}`;
 };
