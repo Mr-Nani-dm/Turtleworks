@@ -12,6 +12,8 @@ Instance: https://turtleworks.app.n8n.cloud · timezone Asia/Kolkata · all flow
 | **TW-05 · Leads · AI triage & draft reply (OpenAI)** | Called by TW-01 (hand-off node) | OpenAI (`gpt-5.4-mini-2026-03-17`) summarises the enquiry, picks a service line, urgency and spam risk, and writes a reply saved to **Gmail → Drafts** (never sent); triage saved to the lead and emailed to the team | 1 per enquiry |
 | **TW-06 · Reports · Monthly website & business report (1st, 09:00 IST)** | Cron `0 9 1 * *` | Vercel Web Analytics (visitors, page views, top pages, referrers, countries) + enquiries + proposals/invoices for last month | 1 |
 | **TW-07 · Deals · Proposal & invoice follow-ups (daily 09:15 IST)** | Cron `15 9 * * *` | Team digest of overdue / soon-due invoices and proposals due a follow-up; client reminders saved as **Gmail drafts** (never sent) | ~30 |
+| **TW-08 · Leads · Inbound lead hub** | Meta webhook (WhatsApp, Instagram, Facebook), Gmail (shipped off), and TW-01 | One Google Sheets CRM for every channel: 5-question qualification, priority, routed team alerts, human hold, replies on the same channel. See `lead-hub/README.md` | 1 per inbound message |
+| **TW-09 · Leads · Follow-up after 24 h, close out after 3 days** | Cron `5 9-20 * * *` | One polite follow-up, then Not Now after 3 days and a team alert | ~360 |
 
 Lead log: n8n → **Data tables → "TW Leads — website enquiries"**. Status convention: `new` → `replied` → `qualified` → `won` / `lost`. Set `replied` after answering so TW-02 stops reminding.
 

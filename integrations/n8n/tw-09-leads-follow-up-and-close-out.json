@@ -1,0 +1,1200 @@
+{
+  "name": "TW-09 · Leads · Follow-up after 24 h, close out after 3 days",
+  "nodes": [
+    {
+      "id": "c661257c-167c-4db7-afc2-d041c8b9c659",
+      "name": "Hourly, 09:00-21:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "5 9-20 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a6b08c57-74f5-4a88-a6f7-d5edb1ebc9ed",
+      "name": "Read CRM leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__CRM_SHEET_ID__"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "filtersUI": {},
+        "combineFilters": "AND",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "__GSHEETS_CREDENTIAL_ID__",
+          "name": "TW · Google Sheets"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "0248e788-3605-4d78-af4e-ac696ae3096e",
+      "name": "Follow-up engine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Follow-up rules: one polite nudge, then close out. Never more than one message.\n//   - awaiting an answer + no reply for 24h  -> one follow-up (22h when the chat window is about to close)\n//   - no reply for 72h                        -> mark Not Now and tell the team (no message to the customer)\n// Customer messages only go out 09:00-21:00 IST.\n\nconst ROUTES = { general: \"hello@turtleworks.in\", projects: \"projects@turtleworks.in\" };\nconst PROJECT_SERVICES = [\"Website design\", \"Business automation\", \"Dashboard / FinOps\"];\nconst GRAPH = \"https://graph.facebook.com/v21.0\";\nconst WA_PHONE_NUMBER_ID = \"__WA_PHONE_NUMBER_ID__\";\nconst FOLLOWUP_TEMPLATE = \"tw_followup\";\nconst TEMPLATE_LANG = \"en\";\nconst AWAITING = [\"Auto Reply Sent\", \"Questionnaire Started\"];\nconst HOUR = 3600e3;\n\nconst ist = (ms) => new Date(ms + 330 * 60000).toISOString().slice(0, 16).replace(\"T\", \" \");\nconst firstOf = (n) => (String(n || \"\").split(/\\s+/)[0] || \"\").replace(/[^\\p{L}'-]/gu, \"\").slice(0, 40) || \"there\";\n\nconst now = Date.now();\nconst istHour = new Date(now + 330 * 60000).getUTCHours();\nconst daytime = istHour >= 9 && istHour < 21;\n\nconst followText = (first) =>\n  `Hi ${first}, just checking in. Happy to continue whenever suits you. Just reply here and we'll pick up where we left off.`;\n\nconst alertFor = (r, label, next) => {\n  const service = r[\"Service Interest\"] || \"Unspecified\";\n  return {\n    to: PROJECT_SERVICES.includes(r[\"Service Interest\"]) ? ROUTES.projects : ROUTES.general,\n    subject: `${label}: ${r.Priority || \"Cold\"} ${service} Lead - ${r.Name || r.Phone || r.Email || r[\"Lead ID\"]}`,\n    body: [\n      `Lead ID: ${r[\"Lead ID\"]}`,\n      `Source: ${r.Source} (${r.Channel})`,\n      `Name: ${r.Name || \"n/a\"}`,\n      `Phone: ${r.Phone || \"n/a\"}`,\n      `Email: ${r.Email || \"n/a\"}`,\n      `Service Interest: ${service}`,\n      `Business Type: ${r[\"Business Type\"] || \"n/a\"}`,\n      `Requirement Summary: ${r[\"Requirement Summary\"] || \"n/a\"}`,\n      `Status: ${r.Status}`,\n      `Priority: ${r.Priority || \"Cold\"}`,\n      `Next Action: ${next}`,\n      \"\",\n      \"Conversation Summary:\",\n      r[\"Conversation Summary\"] || \"n/a\",\n    ].join(\"\\n\"),\n  };\n};\n\nconst out = [];\nfor (const { json: r } of $input.all()) {\n  if (!r[\"Lead ID\"] || String(r[\"Automation Paused\"]) === \"Yes\" || !AWAITING.includes(r.Status)) continue;\n  const lastIn = Number(r[\"Last Inbound Ms\"]);\n  if (!lastIn) continue;\n\n  const fu = Number(r[\"Follow-up Count\"]) || 0;\n  const hrs = (now - lastIn) / HOUR;\n  const chatWin = Number(r[\"Chat Window Ms\"]) || 0;\n  const windowOpen = chatWin > 0 && now - chatWin < 23 * HOUR;\n  const channel = r.Channel;\n  const inWindowChat = windowOpen && (channel === \"WhatsApp\" || channel === \"Instagram\" || channel === \"Facebook\");\n\n  if (hrs >= 72) {\n    const row = { ...r, Status: \"Not Now\", \"Next Follow-up Date\": \"\" };\n    out.push({ json: { action: \"not_now\", has_send: false, row, send: null, has_alert: true, alert: alertFor(row, \"Not Now\", \"No reply for 3 days, so the lead was marked Not Now. Consider a personal follow-up.\") } });\n    continue;\n  }\n  if (fu >= 1 || !daytime || hrs < (inWindowChat ? 22 : 24)) continue;\n\n  const first = firstOf(r.Name);\n  let send = null;\n  let manual = false;\n  if (channel === \"WhatsApp\") {\n    const to = String(r.Phone).replace(/\\D/g, \"\");\n    const url = `${GRAPH}/${WA_PHONE_NUMBER_ID}/messages`;\n    send = windowOpen\n      ? { via: \"whatsapp\", url, body: { messaging_product: \"whatsapp\", recipient_type: \"individual\", to, type: \"text\", text: { preview_url: false, body: followText(first) } } }\n      : {\n          via: \"whatsapp\",\n          url,\n          body: { messaging_product: \"whatsapp\", to, type: \"template\", template: { name: FOLLOWUP_TEMPLATE, language: { code: TEMPLATE_LANG }, components: [{ type: \"body\", parameters: [{ type: \"text\", text: first }] }] } },\n        };\n  } else if (channel === \"Instagram\" || channel === \"Facebook\") {\n    if (windowOpen) send = { via: \"dm\", url: `${GRAPH}/me/messages`, body: { recipient: { id: String(r[\"Channel ID\"]) }, messaging_type: \"RESPONSE\", message: { text: followText(first) } } };\n    else manual = true;\n  } else if (channel === \"Email\" && r[\"Last Message ID\"]) {\n    send = { via: \"email\", to: r.Email, subject: \"Following up\", message: `${followText(first)}\\n\\nTurtleWorks\\nhttps://www.turtleworks.in`, message_id: String(r[\"Last Message ID\"]) };\n  } else {\n    manual = true;\n  }\n\n  const stamp = ist(now).slice(5);\n  const line = `[${stamp}] Bot: ${manual ? \"follow-up needed (could not send automatically)\" : send.body?.template ? \"(WhatsApp follow-up template)\" : \"follow-up sent\"}`;\n  const row = {\n    ...r,\n    \"Follow-up Count\": 1,\n    \"Next Follow-up Date\": ist(lastIn + 72 * HOUR),\n    \"Conversation Summary\": [r[\"Conversation Summary\"], line].filter(Boolean).join(\"\\n\").slice(-2400),\n    ...(send ? { \"Last Contacted\": ist(now), \"Last Contacted Ms\": now } : {}),\n  };\n  out.push({\n    json: {\n      action: manual ? \"manual\" : \"followup\",\n      has_send: Boolean(send),\n      row,\n      row_failed: { ...r, Notes: [r.Notes, `Follow-up failed ${ist(now)} IST`].filter(Boolean).join(\" | \") },\n      send,\n      has_alert: manual,\n      alert: manual ? alertFor(row, \"Follow-up needed\", \"The customer's chat window has closed, so a follow-up could not be sent automatically. Contact them personally.\") : null,\n    },\n  });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "4a39cbba-cf1d-44c9-acdf-35c637f4a2f6",
+      "name": "Message to send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2cac3614-56b3-4360-a286-ba81d78c613f",
+              "leftValue": "={{ $json.has_send }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "35e06d3b-dda0-4c17-ae06-126ef0135a94",
+      "name": "How to send?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1040,
+        -120
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "46bc0c90-19b6-44e5-a531-43e5452bdc80",
+                    "leftValue": "={{ $json.send.via }}",
+                    "rightValue": "whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WhatsApp"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5a200e81-0092-4e8f-a3f1-bfd1f958c29f",
+                    "leftValue": "={{ $json.send.via }}",
+                    "rightValue": "dm",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Instagram / Facebook"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "58bd5f0a-830c-44ed-a7c9-9e5aac63329e",
+                    "leftValue": "={{ $json.send.via }}",
+                    "rightValue": "email",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Email"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0df2a93c-a6f9-499d-aa64-4bfb9e389a63",
+      "name": "Send WhatsApp follow-up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        -260
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.send.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.send.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__WA_TOKEN_CREDENTIAL_ID__",
+          "name": "TW · WhatsApp Cloud API token"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "264b747c-abb2-4dce-ae04-74f7204579ea",
+      "name": "Send Instagram / Facebook follow-up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.send.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.send.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__META_PAGE_TOKEN_CREDENTIAL_ID__",
+          "name": "TW · Meta Page token (Instagram/Facebook)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "51a10dcc-7ac7-4a38-a126-b0ed97e3f86c",
+      "name": "Send email follow-up",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1300,
+        60
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "reply",
+        "messageId": "={{ $json.send.message_id }}",
+        "emailType": "text",
+        "message": "={{ $json.send.message }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "eafb22e5-755d-4037-af60-87fcf2af20db",
+      "name": "Row after send OK",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        -180
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const d = $('Follow-up engine').item.json;\nreturn { json: { ...d, final_row: d.row, send_result: \"sent\", send_error: \"\" } };"
+      }
+    },
+    {
+      "id": "21360ef6-5172-4123-a238-c696758471ba",
+      "name": "Row after send failed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        20
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const d = $('Follow-up engine').item.json;\nconst err = $json.error || {};\nreturn { json: { ...d, final_row: d.row_failed, send_result: \"failed\", send_error: String(err.description || err.message || JSON.stringify(err) || \"unknown\").slice(0, 300) } };"
+      }
+    },
+    {
+      "id": "c818b602-8718-4c0a-af2c-a329ddaad9a1",
+      "name": "Row (no message)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { json: { ...$json, final_row: $json.row, send_result: \"none\", send_error: \"\" } };"
+      }
+    },
+    {
+      "id": "f029848f-35f2-4a64-a30c-876345469097",
+      "name": "Update CRM row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1820,
+        60
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__CRM_SHEET_ID__"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead ID": "={{ $json.final_row[\"Lead ID\"] }}",
+            "Created Date": "={{ $json.final_row[\"Created Date\"] }}",
+            "Name": "={{ $json.final_row[\"Name\"] }}",
+            "Phone": "={{ $json.final_row[\"Phone\"] }}",
+            "Email": "={{ $json.final_row[\"Email\"] }}",
+            "Source": "={{ $json.final_row[\"Source\"] }}",
+            "Channel": "={{ $json.final_row[\"Channel\"] }}",
+            "Lead Type": "={{ $json.final_row[\"Lead Type\"] }}",
+            "Campaign": "={{ $json.final_row[\"Campaign\"] }}",
+            "Service Interest": "={{ $json.final_row[\"Service Interest\"] }}",
+            "Business Type": "={{ $json.final_row[\"Business Type\"] }}",
+            "Requirement Summary": "={{ $json.final_row[\"Requirement Summary\"] }}",
+            "Urgency": "={{ $json.final_row[\"Urgency\"] }}",
+            "Budget Range": "={{ $json.final_row[\"Budget Range\"] }}",
+            "Estimated Value": "={{ $json.final_row[\"Estimated Value\"] }}",
+            "Status": "={{ $json.final_row[\"Status\"] }}",
+            "Priority": "={{ $json.final_row[\"Priority\"] }}",
+            "Owner": "={{ $json.final_row[\"Owner\"] }}",
+            "Last Contacted": "={{ $json.final_row[\"Last Contacted\"] }}",
+            "Next Follow-up Date": "={{ $json.final_row[\"Next Follow-up Date\"] }}",
+            "Conversation Summary": "={{ $json.final_row[\"Conversation Summary\"] }}",
+            "Proposal Link": "={{ $json.final_row[\"Proposal Link\"] }}",
+            "Payment Status": "={{ $json.final_row[\"Payment Status\"] }}",
+            "Notes": "={{ $json.final_row[\"Notes\"] }}",
+            "Lookup Key": "={{ $json.final_row[\"Lookup Key\"] }}",
+            "Channel ID": "={{ $json.final_row[\"Channel ID\"] }}",
+            "Thread ID": "={{ $json.final_row[\"Thread ID\"] }}",
+            "Step": "={{ $json.final_row[\"Step\"] }}",
+            "Automation Paused": "={{ $json.final_row[\"Automation Paused\"] }}",
+            "Follow-up Count": "={{ $json.final_row[\"Follow-up Count\"] }}",
+            "Last Inbound At": "={{ $json.final_row[\"Last Inbound At\"] }}",
+            "Last Inbound Ms": "={{ $json.final_row[\"Last Inbound Ms\"] }}",
+            "Last Contacted Ms": "={{ $json.final_row[\"Last Contacted Ms\"] }}",
+            "Chat Window Ms": "={{ $json.final_row[\"Chat Window Ms\"] }}",
+            "Last Message ID": "={{ $json.final_row[\"Last Message ID\"] }}"
+          },
+          "matchingColumns": [
+            "Lead ID"
+          ],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Created Date",
+              "displayName": "Created Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Channel",
+              "displayName": "Channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Type",
+              "displayName": "Lead Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Campaign",
+              "displayName": "Campaign",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Service Interest",
+              "displayName": "Service Interest",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Business Type",
+              "displayName": "Business Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Requirement Summary",
+              "displayName": "Requirement Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Budget Range",
+              "displayName": "Budget Range",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Estimated Value",
+              "displayName": "Estimated Value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Owner",
+              "displayName": "Owner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Contacted",
+              "displayName": "Last Contacted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Next Follow-up Date",
+              "displayName": "Next Follow-up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Conversation Summary",
+              "displayName": "Conversation Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Proposal Link",
+              "displayName": "Proposal Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Payment Status",
+              "displayName": "Payment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lookup Key",
+              "displayName": "Lookup Key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Channel ID",
+              "displayName": "Channel ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Thread ID",
+              "displayName": "Thread ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Step",
+              "displayName": "Step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Automation Paused",
+              "displayName": "Automation Paused",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow-up Count",
+              "displayName": "Follow-up Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Inbound At",
+              "displayName": "Last Inbound At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Inbound Ms",
+              "displayName": "Last Inbound Ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Contacted Ms",
+              "displayName": "Last Contacted Ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Chat Window Ms",
+              "displayName": "Chat Window Ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Message ID",
+              "displayName": "Last Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "__GSHEETS_CREDENTIAL_ID__",
+          "name": "TW · Google Sheets"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "f28faa26-8482-4c2b-afe9-ab07eab0922d",
+      "name": "Alert: CRM update failed",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2100,
+        160
+      ],
+      "parameters": {
+        "sendTo": "hello@turtleworks.in",
+        "subject": "TW-09 alert: could not update the CRM sheet",
+        "emailType": "text",
+        "message": "={{ 'The follow-up flow could not write to the Google Sheet.\\n\\nLead: ' + $('Follow-up engine').item.json.row['Lead ID'] + '\\nError: ' + ($json.error ? ($json.error.message || JSON.stringify($json.error)) : 'unknown') }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "34ef9503-b102-4607-a5e4-abbe80469bc6",
+      "name": "Alert the team?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1820,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7aed1bd8-8f3d-4f9e-aa5f-dcaecd1a7341",
+              "leftValue": "={{ $json.has_alert }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "091a5d68-925d-45aa-abb7-3344f4e5a24e",
+      "name": "Email alert to team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2100,
+        320
+      ],
+      "parameters": {
+        "sendTo": "={{ $json.alert.to }}",
+        "subject": "={{ $json.alert.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.alert.body }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "75cd040a-41d0-4e62-ad4f-9085fe710052",
+      "name": "Log: follow-up",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1820,
+        -140
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__CRM_SHEET_ID__"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd HH:mm') }}",
+            "Lead ID": "={{ $json.row['Lead ID'] }}",
+            "Channel": "={{ $json.row.Channel }}",
+            "Step": "follow-up",
+            "Result": "={{ $json.action + ' / ' + $json.send_result }}",
+            "Detail": "={{ $json.send_error || $json.row.Status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Channel",
+              "displayName": "Channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Step",
+              "displayName": "Step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Result",
+              "displayName": "Result",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Detail",
+              "displayName": "Detail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "__GSHEETS_CREDENTIAL_ID__",
+          "name": "TW · Google Sheets"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "225514e5-1cd8-4225-a52c-04f960ebc81e",
+      "name": "Alert: follow-up failed",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1820,
+        480
+      ],
+      "parameters": {
+        "sendTo": "hello@turtleworks.in",
+        "subject": "={{ 'TW-09 alert: follow-up failed - ' + $json.row.Name }}",
+        "emailType": "text",
+        "message": "={{ 'A follow-up could not be sent.\\n\\nLead: ' + $json.row['Lead ID'] + '\\nChannel: ' + $json.row.Channel + '\\nError: ' + $json.send_error + '\\n\\nContact the customer personally if it is still worth pursuing.' }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "TurtleWorks Automation"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__GMAIL_CREDENTIAL_ID__",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Hourly, 09:00-21:00 IST": {
+      "main": [
+        [
+          {
+            "node": "Read CRM leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CRM leads": {
+      "main": [
+        [
+          {
+            "node": "Follow-up engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Follow-up engine": {
+      "main": [
+        [
+          {
+            "node": "Message to send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message to send?": {
+      "main": [
+        [
+          {
+            "node": "How to send?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Row (no message)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "How to send?": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Instagram / Facebook follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send email follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp follow-up": {
+      "main": [
+        [
+          {
+            "node": "Row after send OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Row after send failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Instagram / Facebook follow-up": {
+      "main": [
+        [
+          {
+            "node": "Row after send OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Row after send failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email follow-up": {
+      "main": [
+        [
+          {
+            "node": "Row after send OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Row after send failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row after send OK": {
+      "main": [
+        [
+          {
+            "node": "Update CRM row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Alert the team?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log: follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row after send failed": {
+      "main": [
+        [
+          {
+            "node": "Update CRM row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Alert the team?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log: follow-up",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Alert: follow-up failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row (no message)": {
+      "main": [
+        [
+          {
+            "node": "Update CRM row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Alert the team?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log: follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update CRM row": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Alert: CRM update failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert the team?": {
+      "main": [
+        [
+          {
+            "node": "Email alert to team",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "__ERROR_WORKFLOW_ID__"
+  },
+  "pinData": {}
+}

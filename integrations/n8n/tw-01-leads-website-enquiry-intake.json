@@ -35,7 +35,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "// Normalises the website payload into one lead record.\n// topic_hint is a keyword guess against the six TurtleWorks services (src/data/services.ts) — a triage aid, not a classification.\nconst TOPICS = [\n  [\"Website\", /\\b(website|web site|webpage|landing page|redesign|wordpress|shopify|domain|logo|brand|visual identity)/],\n  [\"Get found\", /\\b(seo|search engine|rank|google search|google business|maps|chatgpt|gemini|ai search|geo\\b|lead gen|leads|marketing|campaign|ads\\b|google ads|meta ads|instagram|facebook|social media|poster|reel|short video)/],\n  [\"WhatsApp & automation\", /\\b(whatsapp|chatbot|auto.?repl|automat|reminder|invoice|workflow|integrat|zapier|n8n|manual|follow.?up)/],\n  [\"Custom app\", /\\b(app\\b|application|software|booking|portal|inventory|stock|orders|crm|erp|internal tool|spreadsheet|excel|notebook)/],\n  [\"Dashboards\", /\\b(dashboard|report|analytics|kpi|tracking|power bi|numbers|cloud|azure|aws|gcp|finops|hosting|cloud cost|cloud bill)/],\n  [\"Plan\", /\\b(consult|strateg|roadmap|advice|advis|not sure|assess|audit|guidance|plan\\b)/],\n];\nconst clean = (v, max) => String(v ?? \"\").replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/g, \"\").trim().slice(0, max);\nconst ist = (d) => new Date(d).toLocaleString(\"en-IN\", { timeZone: \"Asia/Kolkata\", dateStyle: \"medium\", timeStyle: \"short\" });\n\nreturn $input.all().map(({ json }) => {\n  const b = json.body ?? {};\n  const now = new Date();\n  const name = clean(b.name, 120);\n  const company = clean(b.company, 160);\n  const message = clean(b.message, 5000);\n  const text = `${message} ${company}`.toLowerCase();\n  const topics = TOPICS.filter(([, re]) => re.test(text)).map(([t]) => t);\n  const firstName = (name.split(/\\s+/)[0] || \"\").replace(/[^\\p{L}'-]/gu, \"\").slice(0, 40);\n\n  return {\n    json: {\n      lead_id: `TW-${now.toISOString().slice(0, 10).replace(/-/g, \"\")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,\n      received_at: now.toISOString(),\n      received_at_ist: ist(now),\n      name,\n      first_name: firstName || \"there\",\n      email: clean(b.email, 254).toLowerCase(),\n      company,\n      preferred_time: clean(b.preferredTime, 120),\n      message,\n      topic_hint: topics.length ? topics.join(\", \") : \"Unclassified\",\n      source_page: clean(b.page, 300) || \"/\",\n      status: \"new\",\n    },\n  };\n});"
+        "jsCode": "// Normalises the website payload into one lead record.\n// topic_hint is a keyword guess against the six TurtleWorks services (src/data/services.ts) — a triage aid, not a classification.\nconst TOPICS = [\n  [\"Website\", /\\b(website|web site|webpage|landing page|redesign|wordpress|shopify|domain|logo|brand|visual identity)/],\n  [\"Get found\", /\\b(seo|search engine|rank|google search|google business|maps|chatgpt|gemini|ai search|geo\\b|lead gen|leads|marketing|campaign|ads\\b|google ads|meta ads|instagram|facebook|social media|poster|reel|short video)/],\n  [\"WhatsApp & automation\", /\\b(whatsapp|chatbot|auto.?repl|automat|reminder|invoice|workflow|integrat|zapier|n8n|manual|follow.?up)/],\n  [\"Custom app\", /\\b(app\\b|application|software|booking|portal|inventory|stock|orders|crm|erp|internal tool|spreadsheet|excel|notebook)/],\n  [\"Dashboards\", /\\b(dashboard|report|analytics|kpi|tracking|power bi|numbers|cloud|azure|aws|gcp|finops|hosting|cloud cost|cloud bill)/],\n  [\"Plan\", /\\b(consult|strateg|roadmap|advice|advis|not sure|assess|audit|guidance|plan\\b)/],\n];\nconst clean = (v, max) => String(v ?? \"\").replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/g, \"\").trim().slice(0, max);\nconst ist = (d) => new Date(d).toLocaleString(\"en-IN\", { timeZone: \"Asia/Kolkata\", dateStyle: \"medium\", timeStyle: \"short\" });\n\nreturn $input.all().map(({ json }) => {\n  const b = json.body ?? {};\n  const now = new Date();\n  const name = clean(b.name, 120);\n  const company = clean(b.company, 160);\n  const message = clean(b.message, 5000);\n  const text = `${message} ${company}`.toLowerCase();\n  const topics = TOPICS.filter(([, re]) => re.test(text)).map(([t]) => t);\n  const firstName = (name.split(/\\s+/)[0] || \"\").replace(/[^\\p{L}'-]/gu, \"\").slice(0, 40);\n\n  return {\n    json: {\n      lead_id: `TW-${now.toISOString().slice(0, 10).replace(/-/g, \"\")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,\n      received_at: now.toISOString(),\n      received_at_ist: ist(now),\n      name,\n      first_name: firstName || \"there\",\n      email: clean(b.email, 254).toLowerCase(),\n      phone: clean(b.phone, 30),\n      company,\n      preferred_time: clean(b.preferredTime, 120),\n      message,\n      topic_hint: topics.length ? topics.join(\", \") : \"Unclassified\",\n      source_page: clean(b.page, 300) || \"/\",\n      status: \"new\",\n    },\n  };\n});"
       }
     },
     {
@@ -259,12 +259,44 @@
       "notes": "Passes each lead to TW-05 (OpenAI) for triage and a draft reply."
     },
     {
-      "id": "44bfea2e-4c52-4e2b-a083-a6dd5f285cad",
+      "id": "b6bb332b-f090-4d71-ac1d-f9f5a2e56fa7",
+      "name": "Hand off to lead hub (TW-08)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        0
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "__LEAD_HUB_WORKFLOW_ID__"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Passes each lead to TW-08: CRM row, WhatsApp welcome if a phone number was given, routed team alert."
+    },
+    {
+      "id": "cc6a240f-91d4-4806-a1c4-d091fe705a46",
       "name": "Acknowledge enquirer — auto-reply",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1680,
+        1920,
         0
       ],
       "parameters": {
@@ -355,6 +387,17 @@
       ]
     },
     "Hand off to AI triage (TW-05)": {
+      "main": [
+        [
+          {
+            "node": "Hand off to lead hub (TW-08)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hand off to lead hub (TW-08)": {
       "main": [
         [
           {
