@@ -1,77 +1,62 @@
 import { Container } from "@/components/ui/Container";
+import { ArrowUpRight } from "@/components/ui/Icons";
 import { Reveal } from "@/components/motion/Reveal";
-import { workItems } from "@/data/work";
+import { ProofScene } from "@/components/sections/ProofScene";
+import { proof } from "@/data/work";
+import { site } from "@/data/site";
 
+/*
+  Proof: real systems we built and run for ourselves, stated only in
+  checkable facts. Client case studies join this section once approved.
+*/
 export function SelectedWork() {
-  const illustrative = workItems.every((item) => item.placeholder);
+  const pageSpeed = `https://pagespeed.web.dev/report?url=${encodeURIComponent(site.url)}`;
 
   return (
-    <section id="work" className="section-solid relative py-28 md:py-36">
+    <section id="work" aria-labelledby="work-title" className="section-solid relative py-24 md:py-32">
       <Container>
-        <Reveal>
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <h2 className="max-w-2xl text-h2">
-                {illustrative
-                  ? "Problems we're built to solve."
-                  : "Outcomes, told through the problem."}
-              </h2>
-            </div>
-            {illustrative ? (
-              <p className="max-w-xs text-sm text-ivory-muted">
-                Typical situations and how we would approach them — not client
-                case studies. Those appear here once approved for publication.
-              </p>
-            ) : null}
-          </div>
+        <Reveal className="max-w-2xl">
+          <h2 id="work-title" className="text-h2">
+            We run our own business
+            <br />
+            <span className="text-mint">on what we sell.</span>
+          </h2>
+          <p className="mt-6 text-lg leading-relaxed text-ivory-soft">
+            Before we build it for you, we build it for ourselves. Two working systems
+            you can check today.
+          </p>
         </Reveal>
 
-        <div className="mt-16 flex flex-col gap-5">
-          {workItems.map((item, i) => {
-            const rows: [string, string][] = item.placeholder
-              ? [
-                  ["The situation", item.problem],
-                  ["How we'd approach it", item.approach],
-                  ["What good looks like", item.outcome],
-                ]
-              : [
-                  ["Problem", item.problem],
-                  ["Approach", item.approach],
-                  ["Outcome", item.outcome],
-                ];
-            return (
-              <Reveal key={item.id} delay={i * 80}>
-                <article className="grid gap-8 rounded-2xl border border-[rgba(220,235,228,0.1)] bg-[rgba(8,19,15,0.72)] p-7 md:p-10 lg:grid-cols-[minmax(10rem,auto)_1fr]">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 lg:flex-col lg:items-start">
-                    <span className="text-xs uppercase tracking-[0.2em] text-sage">
-                      {item.discipline}
-                    </span>
-                    {item.placeholder ? (
-                      <span className="rounded-full border border-[rgba(220,235,228,0.18)] px-2.5 py-0.5 text-xs text-ivory-muted">
-                        Illustrative
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="min-w-0">
-                    <h3 className="text-h3">{item.title}</h3>
-                    <dl className="mt-6 grid gap-6 lg:grid-cols-3">
-                      {rows.map(([label, body]) => (
-                        <div key={label}>
-                          <dt className="text-xs uppercase tracking-[0.18em] text-mint">
-                            {label}
-                          </dt>
-                          <dd className="mt-2 text-[0.9375rem] leading-relaxed text-ivory-soft">
-                            {body}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                </article>
+        <div className="mt-16 flex flex-col gap-20 md:mt-20 md:gap-28">
+          {proof.map((item, i) => (
+            <article key={item.id} className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+              <Reveal className={i % 2 ? "lg:order-2" : ""}>
+                <h3 className="text-h3">{item.title}</h3>
+                <p className="mt-4 text-lg leading-relaxed text-ivory-soft">{item.body}</p>
+                <ul className="mt-6 space-y-3">
+                  {item.facts.map((fact) => (
+                    <li key={fact} className="flex gap-3 leading-relaxed text-ivory-soft">
+                      <span aria-hidden className="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-amber" />
+                      {fact}
+                    </li>
+                  ))}
+                </ul>
+                {item.id === "website" ? (
+                  <a
+                    href={pageSpeed}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group mt-7 inline-flex min-h-11 items-center gap-2 font-medium text-ivory underline decoration-[color-mix(in_srgb,var(--color-amber)_70%,transparent)] underline-offset-4"
+                  >
+                    Check the scores yourself
+                    <ArrowUpRight className="transition-transform duration-300 group-hover:translate-x-0.5" />
+                    <span className="sr-only">(opens Google PageSpeed Insights in a new tab)</span>
+                  </a>
+                ) : null}
               </Reveal>
-            );
-          })}
+              <ProofScene id={item.id} />
+            </article>
+          ))}
         </div>
       </Container>
     </section>

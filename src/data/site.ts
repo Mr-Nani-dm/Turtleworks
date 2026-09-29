@@ -8,11 +8,19 @@
   NEXT_PUBLIC_BOOKING_URL    https booking page (Google Calendar, Cal.com, Calendly)
   NEXT_PUBLIC_LEGAL_NAME     registered / trading entity, e.g. "TurtleWorks Ltd"
   NEXT_PUBLIC_LOCATION       where you operate from, e.g. "Hyderabad, India"
+  NEXT_PUBLIC_WHATSAPP_NUMBER business WhatsApp with country code, e.g. "+91 98xxx xxxxx"
 */
 
 const clean = (value: string | undefined) => {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+};
+
+const whatsappUrl = (value: string | undefined) => {
+  const digits = clean(value)?.replace(/[\s()+-]/g, "");
+  if (!digits || !/^\d{10,15}$/.test(digits)) return null;
+  const greeting = "Hi TurtleWorks, I'd like to talk about a problem in my business.";
+  return `https://wa.me/${digits}?text=${encodeURIComponent(greeting)}`;
 };
 
 const httpsUrl = (value: string | undefined) => {
@@ -33,6 +41,7 @@ export const site = {
   ).replace(/\/+$/, ""),
   email: clean(process.env.NEXT_PUBLIC_CONTACT_EMAIL) ?? "hello@turtleworks.in",
   bookingUrl: httpsUrl(process.env.NEXT_PUBLIC_BOOKING_URL),
+  whatsappUrl: whatsappUrl(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER),
   legalName: clean(process.env.NEXT_PUBLIC_LEGAL_NAME),
   location: clean(process.env.NEXT_PUBLIC_LOCATION),
   description:
@@ -40,10 +49,10 @@ export const site = {
 } as const;
 
 export const nav = [
-  { label: "Solutions", id: "solutions" },
+  { label: "Services", id: "solutions" },
+  { label: "Our Work", id: "work" },
   { label: "How We Work", id: "process" },
-  { label: "Examples", id: "work" },
-  { label: "Why Us", id: "why" },
+  { label: "FAQ", id: "faq" },
   { label: "Contact", id: "contact" },
 ] as const;
 

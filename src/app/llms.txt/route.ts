@@ -2,6 +2,7 @@ import { site } from "@/data/site";
 import { serviceGroups } from "@/data/services";
 import { processSteps } from "@/data/process";
 import { faqs } from "@/data/faq";
+import { proof } from "@/data/work";
 
 /*
   /llms.txt — a plain-text summary for AI assistants and answer engines (GEO).
@@ -27,8 +28,11 @@ export function GET() {
       ),
     ]),
     "",
+    "## Our own work",
+    ...proof.flatMap((item) => [`- **${item.title}**: ${item.body}`, ...item.facts.map((f) => `  - ${f}`)]),
+    "",
     "## How we work",
-    ...processSteps.map((step) => `- **${step.title}**: ${step.body}`),
+    ...processSteps.map((step) => `- **${step.title}**: ${step.body} You get: ${step.youGet}`),
     "",
     "## Frequently asked questions",
     ...faqs.flatMap((f) => ["", `### ${f.question}`, f.answer]),
@@ -36,6 +40,7 @@ export function GET() {
     "## Contact",
     `- Enquiries: ${site.url}/#contact`,
     ...(site.email ? [`- Email: ${site.email}`] : []),
+    ...(site.whatsappUrl ? [`- WhatsApp: ${site.whatsappUrl.split("?")[0]}`] : []),
     ...(site.bookingUrl ? [`- Book a call: ${site.bookingUrl}`] : []),
     "",
     "## Pages",

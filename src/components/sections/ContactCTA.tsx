@@ -37,7 +37,7 @@ export function ContactCTA() {
             </Reveal>
 
             <Reveal delay={100}>
-              <h3 className="eyebrow mt-12">
+              <h3 className="mt-12 font-display text-lg font-semibold text-ivory">
                 What happens next
               </h3>
               <ol className="mt-5 space-y-5">
@@ -57,9 +57,14 @@ export function ContactCTA() {
               </ol>
             </Reveal>
 
-            {site.bookingUrl || site.email ? (
+            {site.whatsappUrl || site.bookingUrl || site.email ? (
               <Reveal delay={160}>
-                <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                  {site.whatsappUrl ? (
+                    <Button href={site.whatsappUrl} variant="ghost" external>
+                      Message us on WhatsApp
+                    </Button>
+                  ) : null}
                   {site.bookingUrl ? (
                     <Button href={site.bookingUrl} variant="ghost" external>
                       Book a call instead

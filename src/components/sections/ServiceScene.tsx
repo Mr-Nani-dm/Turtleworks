@@ -13,7 +13,15 @@ import { useIntersectionReveal } from "@/hooks/useIntersectionReveal";
 
 const at = (ms: number) => ({ "--d": `${ms}ms` }) as CSSProperties;
 
-function Scene({ label, children }: { label: string; children: ReactNode }) {
+export function Scene({
+  label,
+  children,
+  className = "h-56 p-5",
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   const { ref, visible } = useIntersectionReveal<HTMLElement>({ threshold: 0.5 });
 
   return (
@@ -21,7 +29,7 @@ function Scene({ label, children }: { label: string; children: ReactNode }) {
       ref={ref}
       role="img"
       aria-label={label}
-      className={`gv ${visible ? "gv--play" : ""} relative flex h-56 flex-col justify-center overflow-hidden rounded-2xl bg-ivory p-5 text-ink shadow-[0_28px_60px_-30px_rgba(0,0,0,0.95)]`}
+      className={`gv ${visible ? "gv--play" : ""} relative flex flex-col justify-center overflow-hidden rounded-2xl bg-ivory text-ink [text-shadow:none] shadow-[0_28px_60px_-30px_rgba(0,0,0,0.95)] ${className}`}
     >
       {children}
     </figure>

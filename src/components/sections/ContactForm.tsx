@@ -220,7 +220,7 @@ export function ContactForm({ email, bookingUrl }: Props) {
             name="preferredTime"
             type="text"
             autoComplete="off"
-            placeholder="e.g. weekday mornings, IST"
+            placeholder="e.g. weekday mornings"
             maxLength={contactLimits.preferredTime}
             aria-invalid={Boolean(errors.preferredTime)}
             aria-describedby={describedBy("preferredTime")}
@@ -277,7 +277,7 @@ export function ContactForm({ email, bookingUrl }: Props) {
         <button
           type="submit"
           aria-disabled={status === "sending"}
-          className="group inline-flex min-h-11 items-center justify-center gap-2.5 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-abyss [text-shadow:none] transition-[transform,background-color,opacity] duration-300 hover:-translate-y-0.5 hover:bg-white aria-disabled:cursor-wait aria-disabled:opacity-70 aria-disabled:hover:translate-y-0"
+          className="group inline-flex min-h-11 shrink-0 items-center justify-center gap-2.5 whitespace-nowrap rounded-full bg-ivory px-6 py-3 text-sm font-medium text-abyss [text-shadow:none] transition-[transform,background-color,opacity] duration-300 hover:-translate-y-0.5 hover:bg-white aria-disabled:cursor-wait aria-disabled:opacity-70 aria-disabled:hover:translate-y-0"
         >
           {status === "sending" ? (
             <>

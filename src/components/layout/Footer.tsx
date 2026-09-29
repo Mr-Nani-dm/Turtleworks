@@ -61,6 +61,13 @@ export function Footer({ onHome = false }: FooterProps) {
             <p className="text-xs uppercase tracking-[0.2em] text-sage">Get in touch</p>
             <ul className="mt-5 flex flex-col gap-1 sm:gap-3">
               <li>{toSection("contact", "Send an enquiry")}</li>
+              {site.whatsappUrl ? (
+                <li>
+                  <a href={site.whatsappUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                    WhatsApp<span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                </li>
+              ) : null}
               {site.bookingUrl ? (
                 <li>
                   <a href={site.bookingUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>

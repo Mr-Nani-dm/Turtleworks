@@ -1,55 +1,43 @@
-export type WorkItem = {
-  id: string;
-  discipline: string;
-  title: string;
-  problem: string;
-  approach: string;
-  outcome: string;
-  /** Placeholder flag — no real client work is published yet. */
-  placeholder: boolean;
+/*
+  Proof: systems TurtleWorks built and runs for itself. Everything here must
+  stay true and checkable. Lighthouse scores are measured on the production
+  build (mobile and desktop, same run date); re-measure and update the date
+  whenever they are republished. Add client case studies only with approval.
+*/
+
+export const lighthouse = {
+  measured: "September 2026",
+  mobile: { performance: 93, accessibility: 100, bestPractices: 100, seo: 100 },
+  desktop: { performance: 100, accessibility: 100, bestPractices: 100, seo: 100 },
 };
 
-/*
-  Illustrative engagement shapes, NOT real client case studies. They are
-  written as "how we'd approach it", never as past delivery. No customer names,
-  metrics, logos or results. Replace with approved case studies (and set
-  placeholder: false) when available — then past tense is appropriate.
-*/
-export const workItems: WorkItem[] = [
+export type ProofItem = {
+  id: "website" | "enquiries";
+  title: string;
+  body: string;
+  facts: string[];
+};
+
+export const proof: ProofItem[] = [
   {
-    id: "operations-platform",
-    discipline: "Custom software · Automation",
-    title: "Operations spread across spreadsheets",
-    problem:
-      "A growing team runs core operations across spreadsheets and disconnected tools, with no single source of truth.",
-    approach:
-      "Map the real workflow first, then consolidate the critical steps into one focused internal tool and automate the hand-offs.",
-    outcome:
-      "One clear system of record, with manual re-entry removed from the highest-friction steps.",
-    placeholder: true,
+    id: "website",
+    title: "This website",
+    body: "Built to load fast on Indian mobile networks, to be read by search engines and AI assistants, and to hand every enquiry straight to our automations.",
+    facts: [
+      "Scored by Google Lighthouse on mobile and desktop",
+      "A plain-language summary for AI assistants at /llms.txt, plus structured data",
+      "Works with a keyboard and screen readers, and respects reduced motion",
+    ],
   },
   {
-    id: "digital-experience",
-    discipline: "Websites · SEO & GEO",
-    title: "A website that undersells the business",
-    problem:
-      "An established business has a web presence that doesn't reflect the quality of its work or help buyers understand it.",
-    approach:
-      "A right-sized site with a clear content model, technical SEO foundations and components the team can maintain.",
-    outcome:
-      "A fast, accessible site the team can update confidently, built for the long term.",
-    placeholder: true,
-  },
-  {
-    id: "cloud-visibility",
-    discipline: "FinOps · Dashboards",
-    title: "Cloud spend nobody can explain",
-    problem:
-      "Cloud costs have grown opaque, and the people accountable for them lack a clear view of where the money goes.",
-    approach:
-      "Introduce practical cost visibility first, then right-size infrastructure to the actual workload.",
-    outcome:
-      "Spend that is legible and reviewable, with a repeatable practice rather than a one-off cleanup.",
-    placeholder: true,
+    id: "enquiries",
+    title: "Our enquiry system",
+    body: "Every enquiry sent through this site runs through the same kind of automation we build for clients. It runs every day, unattended.",
+    facts: [
+      "Logged the moment it arrives, with an instant confirmation to the sender",
+      "AI suggests the right service, flags spam and drafts a reply; a person checks it before it goes",
+      "Reminders if an enquiry waits too long, and follow-ups on proposals and invoices",
+      "A weekly lead summary, a monthly report with visitor numbers, and the site checked every hour",
+    ],
   },
 ];
