@@ -302,8 +302,8 @@
       "parameters": {
         "sendTo": "={{ $('Prepare lead record').item.json.email }}",
         "subject": "We've received your enquiry — TurtleWorks",
-        "emailType": "text",
-        "message": "=Hi {{ $('Prepare lead record').item.json.first_name }},\n\nThank you for getting in touch with TurtleWorks. Your message has reached us, and we'll read it properly and reply personally to arrange a conversation.\n\nYour reference: {{ $('Prepare lead record').item.json.lead_id }}\n\nIf anything is time-sensitive, simply reply to this email.\n\nTurtleWorks\nBusiness Solutions & Technology Partner\nhttps://www.turtleworks.in",
+        "emailType": "html",
+        "message": "={{ $json.email_html }}",
         "options": {
           "appendAttribution": false,
           "senderName": "TurtleWorks"
@@ -317,6 +317,20 @@
       },
       "onError": "continueRegularOutput",
       "notes": "Auto-reply to the enquirer, sent from the connected company Gmail account."
+    },
+    {
+      "id": "f4450809-97db-42f1-a714-5c1f3293f2ee",
+      "name": "Brand the acknowledgement email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// TurtleWorks branded email layout: forest-green header band with the logo and name,\n// white body, quiet footer. Table-based with inline styles so it survives Gmail, Outlook\n// and phone mail apps. Pure function, no dependencies, so the exact same source is\n// embedded into the n8n Code nodes (see build-emails.mjs) and unit-tested here.\n// Every string a visitor can influence is escaped; only https, mailto and tel links are emitted.\n\nconst PALETTE = {\n  forest: \"#15382e\",\n  evergreen: \"#1d5b46\",\n  ivory: \"#f7f5ef\",\n  amber: \"#c58a2e\",\n  mint: \"#dcebe4\",\n  ink: \"#17211d\",\n  slate: \"#4a5a53\",\n  footer: \"#f5f6f5\",\n  box: \"#f4f7f5\",\n  outer: \"#eef1ef\",\n  line: \"#d5dcd8\",\n};\n\nconst BRAND = {\n  name: \"TurtleWorks\",\n  tagline: \"Business Solutions & Technology Partner\",\n  site: \"https://www.turtleworks.in\",\n  siteLabel: \"turtleworks.in\",\n  email: \"hello@turtleworks.in\",\n  logo: \"https://www.turtleworks.in/brand/turtleworks-mark.png\",\n};\n\nconst FONT = \"Arial,Helvetica,sans-serif\";\n\nfunction escapeHtml(value) {\n  return String(value ?? \"\")\n    .replace(/&/g, \"&amp;\")\n    .replace(/</g, \"&lt;\")\n    .replace(/>/g, \"&gt;\")\n    .replace(/\"/g, \"&quot;\")\n    .replace(/'/g, \"&#39;\");\n}\n\nfunction safeUrl(value) {\n  const url = String(value ?? \"\").trim();\n  if (!url || /[\\s\"'<>`\\\\]/.test(url)) return null;\n  if (/^https:\\/\\/[^/]+/i.test(url)) {\n    try {\n      return new URL(url).protocol === \"https:\" ? url : null;\n    } catch {\n      return null;\n    }\n  }\n  if (/^mailto:[^\\s@]+@[^\\s@]+$/i.test(url)) return url;\n  if (/^tel:\\+?[0-9()-]{6,20}$/i.test(url)) return url;\n  return null;\n}\n\nfunction paragraphsFrom(text) {\n  return String(text ?? \"\")\n    .replace(/\\r\\n?/g, \"\\n\")\n    .split(/\\n{2,}/)\n    .map((p) => p.trim())\n    .filter(Boolean);\n}\n\nconst text = (value) => escapeHtml(value).replace(/\\n/g, \"<br>\");\nconst clip = (value, max) => String(value ?? \"\").replace(/\\s+/g, \" \").trim().slice(0, max);\n\nfunction renderEmail({ preheader = \"\", title = \"\", greeting = \"\", paragraphs = [], reference = null, cta = null, footerNote = \"\", optOut = false } = {}) {\n  const P = PALETTE;\n  const href = cta ? safeUrl(cta.url) : null;\n\n  const preview = clip(preheader, 140);\n  const previewBlock = preview\n    ? `<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;\">${escapeHtml(preview)}${\"&#847;&zwnj;&nbsp;\".repeat(30)}</div>`\n    : \"\";\n\n  const greetingBlock = greeting\n    ? `<p style=\"margin:0 0 16px;font-family:${FONT};font-size:16px;line-height:26px;color:${P.ink};\">${text(greeting)}</p>`\n    : \"\";\n\n  const bodyBlocks = paragraphs\n    .filter((p) => String(p ?? \"\").trim())\n    .map((p) => `<p style=\"margin:0 0 16px;font-family:${FONT};font-size:16px;line-height:26px;color:${P.ink};\">${text(p)}</p>`)\n    .join(\"\");\n\n  const referenceBlock =\n    reference && reference.value\n      ? `<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"margin:8px 0 20px;\"><tr><td style=\"background:${P.box};border:1px solid ${P.line};border-radius:8px;padding:14px 18px;font-family:${FONT};font-size:13px;line-height:20px;color:${P.slate};\">${text(reference.label || \"Reference\")}<br><strong style=\"font-size:16px;color:${P.ink};letter-spacing:0.2px;\">${text(reference.value)}</strong></td></tr></table>`\n      : \"\";\n\n  const buttonBlock =\n    cta && href\n      ? `<table role=\"presentation\" class=\"btn\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:8px 0 24px;\"><tr><td style=\"background:${P.evergreen};border-radius:8px;\"><a href=\"${escapeHtml(href)}\" style=\"display:inline-block;padding:14px 26px;font-family:${FONT};font-size:15px;font-weight:bold;line-height:20px;color:${P.ivory};text-decoration:none;border-radius:8px;\">${text(cta.label)}</a></td></tr></table>`\n      : \"\";\n\n  const why = footerNote ? clip(footerNote, 240) : \"You are receiving this email because you contacted TurtleWorks.\";\n  const stop = optOut ? `<br>Prefer not to hear from us? Reply STOP and we won't email you again.` : \"\";\n\n  return `<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"x-apple-disable-message-reformatting\">\n<meta name=\"color-scheme\" content=\"light\">\n<meta name=\"supported-color-schemes\" content=\"light\">\n<title>${escapeHtml(clip(title, 120) || BRAND.name)}</title>\n<style>@media only screen and (max-width:620px){.container{width:100%!important}.px{padding-left:20px!important;padding-right:20px!important}.btn,.btn td,.btn a{display:block!important;text-align:center!important}}</style>\n</head>\n<body style=\"margin:0;padding:0;background:${P.outer};\">\n${previewBlock}\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"background:${P.outer};\"><tr><td align=\"center\" style=\"padding:24px 12px;\">\n<table role=\"presentation\" class=\"container\" width=\"600\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:600px;max-width:600px;background:#ffffff;border:1px solid ${P.line};border-radius:10px;overflow:hidden;\">\n<tr><td class=\"px\" style=\"background:${P.forest};padding:26px 32px;border-bottom:3px solid ${P.amber};\">\n<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr>\n<td style=\"padding-right:14px;vertical-align:middle;\"><img src=\"${BRAND.logo}\" width=\"44\" height=\"44\" alt=\"${BRAND.name} logo\" style=\"display:block;width:44px;height:44px;border:0;border-radius:9px;background:${P.ivory};\"></td>\n<td style=\"vertical-align:middle;font-family:${FONT};font-size:22px;line-height:26px;font-weight:bold;letter-spacing:-0.3px;color:${P.ivory};\">${BRAND.name}<br><span style=\"font-size:12px;line-height:18px;font-weight:normal;letter-spacing:0;color:${P.mint};\">${escapeHtml(BRAND.tagline)}</span></td>\n</tr></table>\n</td></tr>\n<tr><td class=\"px\" style=\"padding:36px 32px 12px;\">\n${greetingBlock}${bodyBlocks}${referenceBlock}${buttonBlock}\n</td></tr>\n<tr><td class=\"px\" style=\"background:${P.footer};border-top:1px solid ${P.line};padding:24px 32px;font-family:${FONT};font-size:12px;line-height:19px;color:${P.slate};\">\n<strong style=\"color:${P.ink};\">${BRAND.name}</strong> &middot; ${escapeHtml(BRAND.tagline)}<br>\n<a href=\"${BRAND.site}\" style=\"color:${P.evergreen};text-decoration:underline;\">${BRAND.siteLabel}</a> &middot; <a href=\"mailto:${BRAND.email}\" style=\"color:${P.evergreen};text-decoration:underline;\">${BRAND.email}</a><br>\n<span style=\"display:block;padding-top:10px;\">${escapeHtml(why)}${stop}</span>\n</td></tr>\n</table>\n</td></tr></table>\n</body>\n</html>`;\n}\n\nconst d = $('Prepare lead record').item.json;\nreturn { json: { email_html: renderEmail({\n  preheader: \"Your message has reached us. Reference \" + d.lead_id + \".\",\n  title: \"We've received your enquiry\",\n  greeting: \"Hi \" + d.first_name + \",\",\n  paragraphs: [\n    \"Thank you for getting in touch with TurtleWorks. Your message has reached us, and we'll read it properly and reply personally to arrange a conversation.\",\n    \"If anything is time-sensitive, simply reply to this email.\",\n  ],\n  reference: { label: \"Your reference\", value: d.lead_id },\n  footerNote: \"You are receiving this email because you sent an enquiry through turtleworks.in.\",\n}) } };"
+      }
     }
   ],
   "connections": {
@@ -398,6 +412,17 @@
       ]
     },
     "Hand off to lead hub (TW-08)": {
+      "main": [
+        [
+          {
+            "node": "Brand the acknowledgement email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brand the acknowledgement email": {
       "main": [
         [
           {

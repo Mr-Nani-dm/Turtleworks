@@ -83,7 +83,7 @@ for (const { json: r } of $input.all()) {
     if (windowOpen) send = { via: "dm", url: `${GRAPH}/me/messages`, body: { recipient: { id: String(r["Channel ID"]) }, messaging_type: "RESPONSE", message: { text: followText(first) } } };
     else manual = true;
   } else if (channel === "Email" && r["Last Message ID"]) {
-    send = { via: "email", to: r.Email, subject: "Following up", message: `${followText(first)}\n\nTurtleWorks\nhttps://www.turtleworks.in`, message_id: String(r["Last Message ID"]) };
+    send = { via: "email", to: r.Email, subject: "Following up", message: followText(first), message_id: String(r["Last Message ID"]) };
   } else {
     manual = true;
   }

@@ -39,6 +39,23 @@ const code = (name, position, file, mode = "runOnceForAllItems", extra = {}) =>
 const inline = (name, position, jsCode, extra = {}) =>
   node(name, "code", 2, position, { mode: "runOnceForEachItem", jsCode: jsCode.trim() }, extra);
 
+// The branded layout (../../email/template.mjs) is embedded into a Code node because n8n cannot import files.
+const EMAIL_TEMPLATE = readFileSync(path.join(HERE, "../../email/template.mjs"), "utf8").replace(/^export /gm, "").trim();
+const brandEmail = (name, position, { optOut }) =>
+  node(name, "code", 2, position, {
+    mode: "runOnceForEachItem",
+    jsCode: `${EMAIL_TEMPLATE}
+
+const s = $json.send;
+return { json: { ...$json, send: { ...s, html: renderEmail({
+  preheader: String(s.message).split("\\n")[0].slice(0, 120),
+  title: s.subject,
+  paragraphs: paragraphsFrom(s.message),
+  footerNote: "You are receiving this email because you wrote to hello@turtleworks.in.",
+  optOut: ${optOut},
+}) } } };`,
+  });
+
 const cond = (seed, left, operation) => ({
   options: { caseSensitive: true, leftValue: "", typeValidation: "strict", version: 2 },
   conditions: [{ id: stableId(seed), leftValue: left, rightValue: "", operator: { type: "boolean", operation, singleValue: true } }],
@@ -138,8 +155,8 @@ const emailReply = (name, position) =>
       resource: "message",
       operation: "reply",
       messageId: "={{ $json.send.message_id }}",
-      emailType: "text",
-      message: "={{ $json.send.message }}",
+      emailType: "html",
+      message: "={{ $json.send.html }}",
       options: { appendAttribution: false, senderName: "TurtleWorks" },
     },
     { credentials: GMAIL, onError: "continueErrorOutput" },
@@ -228,6 +245,7 @@ return { json: { ok, challenge: ok ? String(q["hub.challenge"]) : "" } };`,
     switchVia("How to send?", [1600, 440]),
     graphPost("Send WhatsApp message", [1880, 300], WA_TOKEN),
     graphPost("Send Instagram / Facebook message", [1880, 480], PAGE_TOKEN),
+    brandEmail("Brand the email", [1740, 780], { optOut: false }),
     emailReply("Reply by email", [1880, 660]),
 
     inline("Row after send OK", [2160, 380], `const d = $('Lead engine').item.json;\nreturn { json: { ...d, final_row: d.row, send_result: "sent", send_error: "" } };`),
@@ -292,7 +310,8 @@ return { json: { ...d, final_row: d.row_failed, send_result: "failed", send_erro
   link(c, "Lead engine", [["Duplicate or ignored?"]]);
   link(c, "Duplicate or ignored?", [[], ["Log: decision", "Reply needed?"]]);
   link(c, "Reply needed?", [["How to send?"], ["Row (no reply)"]]);
-  link(c, "How to send?", [["Send WhatsApp message"], ["Send Instagram / Facebook message"], ["Reply by email"]]);
+  link(c, "How to send?", [["Send WhatsApp message"], ["Send Instagram / Facebook message"], ["Brand the email"]]);
+  link(c, "Brand the email", [["Reply by email"]]);
   for (const send of ["Send WhatsApp message", "Send Instagram / Facebook message", "Reply by email"]) {
     link(c, send, [["Row after send OK"], ["Row after send failed"]]);
   }
@@ -314,6 +333,7 @@ const tw09 = {
     switchVia("How to send?", [1040, -120]),
     graphPost("Send WhatsApp follow-up", [1300, -260], WA_TOKEN),
     graphPost("Send Instagram / Facebook follow-up", [1300, -100], PAGE_TOKEN),
+    brandEmail("Brand the follow-up email", [1160, 140], { optOut: true }),
     emailReply("Send email follow-up", [1300, 60]),
     inline("Row after send OK", [1560, -180], `const d = $('Follow-up engine').item.json;\nreturn { json: { ...d, final_row: d.row, send_result: "sent", send_error: "" } };`),
     inline(
@@ -359,7 +379,8 @@ return { json: { ...d, final_row: d.row_failed, send_result: "failed", send_erro
   link(c, "Read CRM leads", [["Follow-up engine"]]);
   link(c, "Follow-up engine", [["Message to send?"]]);
   link(c, "Message to send?", [["How to send?"], ["Row (no message)"]]);
-  link(c, "How to send?", [["Send WhatsApp follow-up"], ["Send Instagram / Facebook follow-up"], ["Send email follow-up"]]);
+  link(c, "How to send?", [["Send WhatsApp follow-up"], ["Send Instagram / Facebook follow-up"], ["Brand the follow-up email"]]);
+  link(c, "Brand the follow-up email", [["Send email follow-up"]]);
   for (const send of ["Send WhatsApp follow-up", "Send Instagram / Facebook follow-up", "Send email follow-up"]) {
     link(c, send, [["Row after send OK"], ["Row after send failed"]]);
   }

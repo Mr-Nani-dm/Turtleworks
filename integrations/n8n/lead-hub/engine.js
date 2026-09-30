@@ -115,7 +115,7 @@ const sendFor = (inbound, phone, first, text) => {
       via: "email",
       to: inbound.email,
       subject: `Re: ${inbound.subject || "your enquiry"}`,
-      message: `${text}\n\nTurtleWorks\nhttps://www.turtleworks.in`,
+      message: text,
       message_id: inbound.message_id,
     };
   if (inbound.channel === "Website" && phone) return { via: "whatsapp", url: wa, body: waTemplateBody(phone, WELCOME_TEMPLATE, [first]) };

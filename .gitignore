@@ -44,3 +44,6 @@ next-env.d.ts
 
 # Impeccable design-review snapshots (local)
 /.impeccable/
+
+# Generated email previews
+/integrations/email/preview/
