@@ -29,23 +29,29 @@ export function Hero() {
       <Container className="relative w-full">
         <div className="max-w-3xl">
           <Enter>
-            <h1 className="text-h1 font-semibold leading-[1.04]">
-              Websites, automation and software that{" "}
-              <span className="text-mint">move your business forward.</span>
-            </h1>
-          </Enter>
-
-          <Enter delay={140}>
-            <p className="mt-7 max-w-xl text-lg leading-relaxed text-ivory-soft">
-              We help you get found, run with less effort, and see your numbers
-              clearly — starting with the problem you actually need solved.
+            <p className="mb-5 inline-flex rounded-full border border-[rgba(224,168,82,0.35)] bg-[rgba(8,19,15,0.62)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-gold shadow-[0_18px_48px_rgba(0,0,0,0.28)] backdrop-blur-md">
+              More clarity. Better enquiries. Less manual follow-up.
             </p>
           </Enter>
 
-          <Enter delay={220}>
+          <Enter delay={80}>
+            <h1 className="text-h1 font-semibold leading-[1.02]">
+              Get found. <span className="text-mint">Get trusted.</span>{" "}
+              <span className="text-gold">Get better enquiries.</span>
+            </h1>
+          </Enter>
+
+          <Enter delay={160}>
+            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-ivory-soft">
+              TurtleWorks builds websites, automations, and dashboards that bring more clarity,
+              stronger follow-ups, and less manual work to growing businesses.
+            </p>
+          </Enter>
+
+          <Enter delay={240}>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button href="#solutions" variant="primary">
-                Explore what we do
+                Show me the solutions
               </Button>
               <Button href="#contact" variant="ghost">
                 Start a conversation
