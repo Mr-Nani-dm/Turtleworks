@@ -10,6 +10,21 @@ Gmail (shipped OFF) ──┘                                                   
 TW-09 (hourly 09:05-20:05 IST): 24 h no answer -> one follow-up · 72 h -> Not Now + team alert
 ```
 
+## Social visibility audit campaign
+
+The keyword **AUDIT** is reserved for TurtleWorks organic social posts using campaign id `SOC-2026Q4-VISIBILITY-AUDIT-01`.
+
+For Instagram/Facebook/WhatsApp chat messages:
+
+1. A new inbound message containing `AUDIT` is tagged to that campaign.
+2. The lead is asked only for business name, website/main social profile, and city/location.
+3. The next customer reply is stored verbatim under the requirement summary as audit details.
+4. The lead moves to `Needs Human Review`, automation pauses, and the team is alerted.
+5. The customer receives one acknowledgement saying TurtleWorks will review only publicly visible information and will not promise rankings, traffic, leads, or revenue.
+6. Any detailed findings, pricing, proposal, timeline, or service recommendation stays human-controlled.
+
+This path is intentionally separate from the normal five-question qualification menu so the social CTA feels like the promise made in the post rather than a generic sales funnel.
+
 ## Files
 
 | File | Purpose |
