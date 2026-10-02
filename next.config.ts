@@ -52,6 +52,16 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async redirects() {
+    return [
+      {
+        source: "/whatsapp",
+        destination: "https://wa.me/918499989116",
+        // Keep the branded link updateable if the contact number changes.
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },
