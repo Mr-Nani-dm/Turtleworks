@@ -14,6 +14,10 @@ const WA_PHONE_NUMBER_ID = "__WA_PHONE_NUMBER_ID__";
 const WELCOME_TEMPLATE = "tw_welcome";
 const TEMPLATE_LANG = "en";
 const SITE_GREETING = "Hi TurtleWorks, I'd like to talk about a problem in my business.";
+const AUDIT_CAMPAIGN = "SOC-2026Q4-VISIBILITY-AUDIT-01";
+const AUDIT_KEYWORD = /\baudit\b/i;
+const AUDIT_ASK = "Thanks for messaging TurtleWorks.\n\nSend me:\n1. your business name,\n2. your website or main social profile, and\n3. your city/location.\n\nI’ll take a quick look at what’s publicly visible and share the main gaps I can verify.";
+const AUDIT_ACK = "Thanks — got it. I’ll review what’s publicly visible and share the main gaps I can verify. I won’t make ranking, traffic, lead or revenue promises.";
 
 const SERVICES = ["Website design", "Business automation", "Dashboard / FinOps", "SEO / content", "Not sure"];
 const PROJECT_SERVICES = ["Website design", "Business automation", "Dashboard / FinOps"];
@@ -133,6 +137,8 @@ const REASONS = {
   opt_out: ["Opted out", "This person asked us to stop. No further automated messages will be sent."],
   hot_lead: ["Hot lead", "Contact promptly: they asked about a call, pricing, a proposal or an urgent timeline."],
   escalation: ["Attention needed", "This message mentions payments or existing-project support. Please review."],
+  audit_requested: ["Visibility audit requested", "The prospect came from the social visibility campaign. Wait for their business name, website/social profile and location."],
+  audit_details_received: ["Visibility audit details received", "Review the public presence, prepare only evidence-backed observations, and reply personally. Automation is paused."],
 };
 
 function decide(inbound, prev, now) {
@@ -148,6 +154,8 @@ function decide(inbound, prev, now) {
   const prevStatus = prev.Status || "";
   const step = Number(prev.Step) || 0;
   const paused = String(prev["Automation Paused"]) === "Yes";
+  const auditRequest = isChat && AUDIT_KEYWORD.test(text);
+  const auditConversation = prev.Campaign === AUDIT_CAMPAIGN || step === 20 || step === 21;
 
   if (!isNew && inbound.message_id && String(prev["Last Message ID"]) === String(inbound.message_id)) {
     return { skip: true, reason: "duplicate message" };
@@ -188,7 +196,16 @@ function decide(inbound, prev, now) {
     notes = add(notes, `Customer sent a ${inbound.media_type}, which automation cannot read`);
   } else if (isNew) {
     reason = "new_lead";
-    if (isWebsite) {
+    if (auditRequest) {
+      reason = "audit_requested";
+      service = "SEO / content";
+      req = "Requested a public digital visibility audit via social DM.";
+      bump("Warm");
+      reply = AUDIT_ASK;
+      status = "Questionnaire Started";
+      stepNext = 20;
+      notes = add(notes, `Campaign: ${AUDIT_CAMPAIGN}`);
+    } else if (isWebsite) {
       req = text;
       service = guessService(text);
       if (inbound.company || text.length >= 60) bump("Warm");
@@ -217,6 +234,15 @@ function decide(inbound, prev, now) {
       pausedNext = true;
     }
     reason = "replied_while_paused";
+  } else if (step === 20 && auditConversation) {
+    req = add(req, `Audit details: ${text}`);
+    bump("Warm");
+    status = "Needs Human Review";
+    pausedNext = true;
+    stepNext = 21;
+    reply = AUDIT_ACK;
+    reason = "audit_details_received";
+    notes = add(notes, `Campaign: ${AUDIT_CAMPAIGN}`);
   } else if (step === 0 || step >= 7) {
     reason = "customer_replied";
   } else if (step === 1) {
@@ -282,7 +308,7 @@ function decide(inbound, prev, now) {
   const lastInbound = Number(inbound.received_ms) || now;
   const awaiting = AWAITING.includes(status) && !pausedNext;
   const nextFollow = awaiting ? ist(fu >= 1 ? lastInbound + 72 * HOUR : now + 24 * HOUR) : "";
-  const campaign = prev.Campaign || (text === SITE_GREETING ? "Website WhatsApp button" : isWebsite ? "Website form" : "Direct message");
+  const campaign = prev.Campaign || (auditRequest ? AUDIT_CAMPAIGN : text === SITE_GREETING ? "Website WhatsApp button" : isWebsite ? "Website form" : "Direct message");
 
   const base = {
     "Lead ID": prev["Lead ID"] || inbound.lead_id || `${prefix}-${ist(now).slice(0, 10).replace(/-/g, "")}-${idPart}`,

@@ -158,6 +158,14 @@ t("new email lead -> threaded email reply with menu", d.send.via === "email" && 
 d = engine(inb({ body: { object: "instagram", entry: [{ id: "p", messaging: [{ sender: { id: "IG7" }, timestamp: NOW, message: { mid: "ig-m", text: "hi" } }] }] } }), null);
 t("instagram lead -> DM reply", d.send.via === "dm" && d.send.body.recipient.id === "IG7" && d.send.url.endsWith("/me/messages") && d.row["Channel ID"] === "IG7");
 
+// social visibility campaign keyword
+let audit = engine(inb({ body: { object: "instagram", entry: [{ id: "p", messaging: [{ sender: { id: "IGA" }, timestamp: NOW, message: { mid: "ig-a1", text: "AUDIT" } }] }] } }), null);
+t("AUDIT keyword -> campaign intake", audit.row.Campaign === "SOC-2026Q4-VISIBILITY-AUDIT-01" && audit.row.Step === 20 && audit.row.Status === "Questionnaire Started" && audit.row["Service Interest"] === "SEO / content" && /business name/.test(audit.send.body.message.text), JSON.stringify(audit.row));
+const auditRow = { ...audit.row };
+audit = engine(inb({ body: { object: "instagram", entry: [{ id: "p", messaging: [{ sender: { id: "IGA" }, timestamp: NOW, message: { mid: "ig-a2", text: "Asha Bakes, instagram.com/ashabakes, Guntur" } }] }] } }), auditRow);
+t("audit details -> human review", audit.row.Status === "Needs Human Review" && audit.row["Automation Paused"] === "Yes" && audit.row.Step === 21 && /Audit details:/.test(audit.row["Requirement Summary"]) && audit.alert.subject.startsWith("Visibility audit details received:"), JSON.stringify([audit.row.Status, audit.row.Step, audit.alert && audit.alert.subject]));
+t("audit acknowledgement avoids promises", /won.t make ranking, traffic, lead or revenue promises/i.test(audit.send.body.message.text));
+
 // payment / support routing
 d = engine(inb(wa("I am an existing client, the site is down and I need the invoice", "e1")), null);
 t("support + payment keywords route to all relevant inboxes", d.alert.to.includes("support@turtleworks.in") && d.alert.to.includes("accounts@turtleworks.in") && d.alert.subject.startsWith("Attention needed:"), d.alert.to + " | " + d.alert.subject);
