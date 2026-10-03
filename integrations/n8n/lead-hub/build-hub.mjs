@@ -1,6 +1,6 @@
 // Generates TW-08 (inbound lead hub) and TW-09 (follow-up & close-out) plus the CRM sheet headers.
 // Run:  node build-hub.mjs          (writes to ../ = integrations/n8n)
-// Logic lives in normalise.js / engine.js / followup.js and is unit-tested by test-hub.cjs.
+// Logic lives in normalise.js / engine.js / followup.js and is unit-tested by test-hub.mjs.
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import path from "node:path";

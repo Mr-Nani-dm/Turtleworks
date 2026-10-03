@@ -17,7 +17,7 @@ TW-09 (hourly 09:05-20:05 IST): 24 h no answer -> one follow-up · 72 h -> Not N
 | `normalise.js` | One shape for every source; drops status callbacks, echoes, reactions, our own mail, noreply and auto-replies |
 | `engine.js` | The rules: questionnaire, priority, routing, human hold, opt-out, duplicates |
 | `followup.js` | 24 h nudge and 72 h close-out |
-| `test-hub.cjs` | 69 checks. Run `node test-hub.cjs` after any rule change |
+| `test-hub.mjs` | 70 checks. Run `node test-hub.mjs` after any rule change |
 | `build-hub.mjs` | Regenerates `../tw-08-*.json`, `../tw-09-*.json` and the sheet header CSVs |
 
 ## Rules (as built)

@@ -1,6 +1,6 @@
 // Generates TW-10 (outbound sender + follow-ups) and TW-11 (prospect reply handler).
 // Run:  node build-outreach.mjs      (writes to ../ = integrations/n8n)
-// Logic lives in outbound-send.js / outbound-reply.js and is unit-tested by test-outreach.cjs.
+// Logic lives in outbound-send.js / outbound-reply.js and is unit-tested by test-outreach.mjs.
 // The routing node that sends prospect replies here is built into TW-08 (../lead-hub/build-hub.mjs).
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -89,7 +89,6 @@ const mail = (name, position, to, subject, message) =>
 const link = (conns, from, outputs) => {
   conns[from] = { main: outputs.map((targets) => targets.map((to) => ({ node: to, type: "main", index: 0 }))) };
 };
-const nowIst = "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd HH:mm') }}";
 const sheetErr = (who) => `={{ '${who} could not write to the Google Sheet.\\n\\nError: ' + ($json.error ? ($json.error.message || JSON.stringify($json.error)) : 'unknown') + '\\n\\nCheck the Prospects tab (column names must match exactly) and the Outreach Log tab, then look at this execution in n8n.' }}`;
 const sendFailBody = (who) =>
   `={{ '${who}\\n\\nProspect: ' + $json.row['Prospect ID'] + ' (' + $json.row['Business Name'] + ')\\nPhone: ' + $json.row.Phone + '\\nError: ' + $json.send_error + '\\n\\nThe prospect is now Human Review with Send Error set, so it will not be retried automatically. Common causes: template not approved yet, number not on WhatsApp, expired token, or WhatsApp declined a marketing message to this number.' }}`;
