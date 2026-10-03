@@ -94,7 +94,7 @@ Column letters follow the header order in `prospects-sheet-columns.csv`. Set the
 | `outbound-send.js` | Who to message this run: caps, hours, checks, follow-up timing |
 | `outbound-reply.js` | YES / NO / price / call handling |
 | `tag-prospect-replies.js` | Runs inside TW-08: sends prospect replies to TW-11 instead of the lead flow |
-| `test-outreach.cjs` | 101 checks. Run `node test-outreach.cjs` after any change |
+| `test-outreach.mjs` | 101 checks. Run `node test-outreach.mjs` after any change |
 | `build-outreach.mjs` | Regenerates `../tw-10-*.json`, `../tw-11-*.json` and the sheet header files |
 
 ## Limits

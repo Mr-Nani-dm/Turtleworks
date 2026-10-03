@@ -1,8 +1,8 @@
-const fs = require("fs");
-const path = require("path");
-const COLUMNS = require("./columns.json");
+import { readFileSync } from "node:fs";
 
-const load = (f) => fs.readFileSync(path.join(__dirname, f), "utf8");
+const load = (f) => readFileSync(new URL(f, import.meta.url), "utf8");
+const COLUMNS = JSON.parse(load("columns.json"));
+
 function exec(file, input, named = {}, now = Date.now(), src) {
   const realNow = Date.now;
   Date.now = () => now;

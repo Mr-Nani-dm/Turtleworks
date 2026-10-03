@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, type FormEvent } from "react";
+import Link from "next/link";
 import type { Category, Check, Summary } from "@/lib/site-check/types";
 
 type Result = { url: string; categories: Category[]; summary: Summary };
@@ -391,12 +392,12 @@ export function SiteCheckForm() {
               We build websites, set up SEO, and connect businesses to their customers.
               The check is free &mdash; if you want help with any of the findings, get in touch.
             </p>
-            <a
+            <Link
               href="/#contact"
               className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full border border-[rgba(220,235,228,0.28)] bg-[rgba(8,19,15,0.6)] px-5 py-2.5 text-sm font-medium text-ivory transition-colors hover:border-amber hover:bg-[rgba(8,19,15,0.78)]"
             >
               Talk to us
-            </a>
+            </Link>
           </div>
         </div>
       )}
