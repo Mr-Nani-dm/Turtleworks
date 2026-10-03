@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { reviewSubmissions, formatReportDate, buildUnansweredReminder, buildWeeklySummary, buildMonthlyReport } from "./reporting/reports.mjs";
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -333,38 +334,19 @@ https://www.turtleworks.in`,
   settings: settings(),
 };
 
+// Configure only in the private n8n instance, never with private emails in Git.
+// Keep the same exact-email list in TW-02, TW-03 and TW-06.
+const REVIEW_CONFIG = `// Exact-email review list: configure privately after import. Keep Git exports empty.
+const SELF_ASSOCIATED_EMAILS = [];`;
+const REVIEW_HELPERS = `${reviewSubmissions.toString()}\n\n${formatReportDate.toString()}`;
+
 // ── TW-02 · unanswered reminder ───────────────────────────────────────────────
 const FIND_UNANSWERED = `
-// Leads still marked "new" after 20 hours. Returns nothing (no email) when the inbox is clear.
-const WAIT_HOURS = 20;
-${IST}
-const cutoff = Date.now() - WAIT_HOURS * 3600e3;
-const pending = $input.all()
-  .map((i) => i.json)
-  .filter((r) => r.lead_id && String(r.status || "new").trim().toLowerCase() === "new")
-  .filter((r) => new Date(r.received_at).getTime() < cutoff)
-  .sort((a, b) => new Date(a.received_at) - new Date(b.received_at));
-
-if (!pending.length) return [];
-
-const hours = (d) => Math.round((Date.now() - new Date(d).getTime()) / 3600e3);
-const lines = pending.map((r) =>
-  \`• \${r.lead_id} — \${r.name}\${r.company ? \` (\${r.company})\` : ""} <\${r.email}>\\n  Received \${ist(r.received_at)} IST · waiting \${hours(r.received_at)} h · \${r.topic_hint}\`,
-);
-const n = pending.length;
-
-return [{
-  json: {
-    subject: \`\${n} website \${n === 1 ? "enquiry is" : "enquiries are"} waiting for a reply\`,
-    body: [
-      \`\${n} \${n === 1 ? "enquiry has" : "enquiries have"} been marked "new" for more than \${WAIT_HOURS} hours:\`,
-      "",
-      ...lines,
-      "",
-      'Reply from the original notification email, then set status to "replied" in n8n → Data tables → "TW Leads — website enquiries".',
-    ].join("\\n"),
-  },
-}];`;
+${REVIEW_CONFIG}
+${REVIEW_HELPERS}
+${buildUnansweredReminder.toString()}
+const report = buildUnansweredReminder($input.all().map((i) => i.json), SELF_ASSOCIATED_EMAILS);
+return report ? [{ json: report }] : [];`;
 
 const tw02 = {
   name: "TW-02 · Leads · Unanswered enquiry reminder (weekdays 09:30 IST)",
@@ -385,45 +367,10 @@ const tw02 = {
 
 // ── TW-03 · weekly summary ────────────────────────────────────────────────────
 const WEEKLY_SUMMARY = `
-// Last 7 days of website enquiries, grouped by topic and status. Sent even when the week was quiet.
-${IST}
-const rows = $input.all().map((i) => i.json).filter((r) => r.lead_id);
-const since = Date.now() - 7 * 864e5;
-const week = rows.filter((r) => new Date(r.received_at).getTime() >= since);
-const open = rows.filter((r) => String(r.status || "new").trim().toLowerCase() === "new");
-
-const tally = (list, key) => {
-  const counts = {};
-  for (const r of list) for (const k of String(r[key] || "—").split(", ")) counts[k] = (counts[k] || 0) + 1;
-  return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, v]) => \`  \${k}: \${v}\`).join("\\n") || "  —";
-};
-const day = (d) => new Date(d).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium" });
-const list = week
-  .sort((a, b) => new Date(b.received_at) - new Date(a.received_at))
-  .map((r) => \`• \${r.lead_id} · \${ist(r.received_at)} · \${r.name}\${r.company ? \` (\${r.company})\` : ""} · \${r.status || "new"}\`)
-  .join("\\n");
-
-return [{
-  json: {
-    subject: \`TurtleWorks weekly leads — \${week.length} new (\${day(since)} – \${day(Date.now())})\`,
-    body: [
-      \`Website enquiries, \${day(since)} – \${day(Date.now())}\`,
-      "",
-      \`New this week:            \${week.length}\`,
-      \`Still awaiting a reply:   \${open.length} (all time)\`,
-      \`Total leads logged:       \${rows.length}\`,
-      "",
-      "By topic (this week):",
-      tally(week, "topic_hint"),
-      "",
-      "By status (this week):",
-      tally(week, "status"),
-      "",
-      week.length ? "This week's enquiries:" : "No new enquiries this week.",
-      list,
-    ].join("\\n").trim(),
-  },
-}];`;
+${REVIEW_CONFIG}
+${REVIEW_HELPERS}
+${buildWeeklySummary.toString()}
+return [{ json: buildWeeklySummary($input.all().map((i) => i.json), SELF_ASSOCIATED_EMAILS) }];`;
 
 const tw03 = {
   name: "TW-03 · Reports · Weekly lead summary (Mondays 09:00 IST)",
@@ -713,14 +660,14 @@ Read and edit it before sending — AI drafts can be wrong. Nothing has been sen
 // ── TW-06 · monthly report ────────────────────────────────────────────────────
 const LAST_MONTH = `
 // Last calendar month in IST (UTC+5:30, no daylight saving).
-// Vercel Hobby keeps 30 days of analytics, so the analytics window starts no earlier than 29 days ago.
+// This workflow conservatively requests the last 29 days of the one-month Hobby reporting window.
 const IST_MS = 330 * 60000;
 const nowIst = new Date(Date.now() + IST_MS);
 const y = nowIst.getUTCFullYear();
 const m = nowIst.getUTCMonth();
 const since = new Date(Date.UTC(y, m - 1, 1) - IST_MS);
 const until = new Date(Date.UTC(y, m, 1) - IST_MS - 1);
-const analyticsSince = new Date(Math.max(since.getTime(), Date.now() - 29 * 864e5));
+const analyticsSince = new Date(Math.min(until.getTime(), Math.max(since.getTime(), Date.now() - 29 * 864e5)));
 return [{
   json: {
     projectId: "${VERCEL_PROJECT.projectId}",
@@ -728,7 +675,7 @@ return [{
     since: since.toISOString(),
     until: until.toISOString(),
     analyticsSince: analyticsSince.toISOString(),
-    analyticsUntil: new Date(Math.max(until.getTime(), analyticsSince.getTime() + 864e5)).toISOString(),
+    analyticsUntil: until.toISOString(),
     label: new Date(Date.UTC(y, m - 1, 1)).toLocaleString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" }),
   },
 }];`;
@@ -760,74 +707,22 @@ const vercelQuery = (name, position, path, extra = []) =>
   );
 
 const MONTHLY_REPORT = `
-// Combines Vercel Web Analytics with the leads and deals tables into one monthly email.
-const period = $("Work out last month (IST)").first().json;
-const from = Date.parse(period.since);
-const to = Date.parse(period.until);
-const inPeriod = (v) => { const t = Date.parse(v); return Number.isFinite(t) && t >= from && t <= to; };
-const read = (name) => { try { return $(name).first().json; } catch { return {}; } };
-const all = (name) => { try { return $(name).all().map((i) => i.json); } catch { return []; } };
-const inr = (n) => Number(n || 0).toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
-const lc = (v) => String(v ?? "").trim().toLowerCase();
-
-const count = read("Vercel · visitors & page views");
-const problem = (r) => (r.error ? r.error.message || r.error.code || JSON.stringify(r.error) : null);
-const analyticsProblem = problem(count) || (count.data ? null : "no data returned");
-const visitors = count.data?.visitors ?? 0;
-const pageviews = count.data?.pageviews ?? 0;
-
-const top = (name, key, n) => {
-  const rows = Array.isArray(read(name).data) ? read(name).data : [];
-  return rows.slice(0, n).map((r) => \`  \${String(r[key] ?? "(none)").padEnd(34)} \${r.pageviews ?? r.count ?? 0} views · \${r.visitors ?? 0} visitors\`).join("\\n") || "  —";
-};
-
-const leads = all("Read all leads").filter((r) => r.lead_id);
-const monthLeads = leads.filter((r) => inPeriod(r.received_at));
-const byTopic = {};
-for (const r of monthLeads) for (const t of String(r.topic_hint || "Unclassified").split(", ")) byTopic[t] = (byTopic[t] || 0) + 1;
-
-const deals = all("Read all deals").filter((r) => r.client_name || r.deal_id);
-const proposalsSent = deals.filter((r) => inPeriod(r.proposal_sent_on));
-const openProposals = deals.filter((r) => lc(r.proposal_status) === "sent");
-const invoicesIssued = deals.filter((r) => inPeriod(r.invoice_issued_on));
-const unpaid = deals.filter((r) => lc(r.invoice_status) === "unpaid");
-const overdue = unpaid.filter((r) => r.invoice_due_on && Date.parse(r.invoice_due_on) < Date.now());
-const sum = (list, key) => list.reduce((s, r) => s + Number(r[key] || 0), 0);
-
-const body = [
-  \`TurtleWorks — \${period.label}\`,
-  "",
-  \`WEBSITE (Vercel Web Analytics, production\${period.analyticsSince > period.since ? \`, from \${new Date(period.analyticsSince).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium" })} — Hobby keeps 30 days\` : ""})\`,
-  analyticsProblem
-    ? \`  Analytics unavailable: \${analyticsProblem}\\n  Check that Web Analytics is enabled and the Vercel token in n8n is valid.\`
-    : [
-        \`  Visitors:     \${visitors}\`,
-        \`  Page views:   \${pageviews}\`,
-        \`  Enquiry rate: \${visitors ? ((monthLeads.length / visitors) * 100).toFixed(1) : "0.0"}% of visitors sent an enquiry\`,
-        "",
-        "  Top pages:",
-        top("Vercel · top pages", "requestPath", 8),
-        "",
-        "  Top referrers:",
-        top("Vercel · top referrers", "referrerHostname", 6),
-        "",
-        "  Top countries:",
-        top("Vercel · top countries", "country", 6),
-      ].join("\\n"),
-  "",
-  "ENQUIRIES",
-  \`  New this month:          \${monthLeads.length}\`,
-  \`  Still awaiting a reply:  \${leads.filter((r) => lc(r.status || "new") === "new").length} (all time)\`,
-  ...Object.entries(byTopic).sort((a, b) => b[1] - a[1]).map(([t, n]) => \`  · \${t}: \${n}\`),
-  "",
-  "PROPOSALS & INVOICES",
-  \`  Proposals sent:          \${proposalsSent.length} (\${inr(sum(proposalsSent, "value_inr"))})\`,
-  \`  Proposals awaiting decision: \${openProposals.length} (\${inr(sum(openProposals, "value_inr"))})\`,
-  \`  Invoices issued:         \${invoicesIssued.length} (\${inr(sum(invoicesIssued, "invoice_amount_inr"))})\`,
-  \`  Unpaid invoices:         \${unpaid.length} (\${inr(sum(unpaid, "invoice_amount_inr"))}), \${overdue.length} overdue\`,
-].join("\\n");
-
-return [{ json: { subject: \`TurtleWorks monthly report — \${period.label}\`, body } }];`;
+${REVIEW_CONFIG}
+${REVIEW_HELPERS}
+${buildMonthlyReport.toString()}
+const readAnalytics = (name) => { try { return $(name).first().json; } catch { return {}; } };
+return [{ json: buildMonthlyReport({
+  period: $("Work out last month (IST)").first().json,
+  leads: $("Read all leads").all().map((i) => i.json),
+  deals: $("Read all deals").all().map((i) => i.json),
+  selfAssociatedEmails: SELF_ASSOCIATED_EMAILS,
+  analytics: {
+    count: readAnalytics("Vercel · visitors & page views"),
+    pages: readAnalytics("Vercel · top pages"),
+    referrers: readAnalytics("Vercel · top referrers"),
+    countries: readAnalytics("Vercel · top countries"),
+  },
+}) }];`;
 
 const tw06 = {
   name: "TW-06 · Reports · Monthly website & business report (1st, 09:00 IST)",

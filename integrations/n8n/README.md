@@ -6,11 +6,11 @@ Instance: https://turtleworks.app.n8n.cloud · timezone Asia/Kolkata · all flow
 |---|---|---|---|
 | **TW-00 · Ops · Workflow failure alert (error handler)** | Any TW flow errors | Emails the team the workflow, failed step, error and execution link | only on failure |
 | **TW-01 · Leads · Website enquiry intake — notify, log, acknowledge** | `POST /webhook/turtleworks-contact` (header `x-contact-secret`) | Cleans the enquiry, assigns a reference (`TW-YYYYMMDD-XXXX`) and a topic hint → emails the team (Reply-To = enquirer) → confirms to the website → logs the lead → optional auto-reply to the enquirer (disabled by default) | 1 per enquiry |
-| **TW-02 · Leads · Unanswered enquiry reminder (weekdays 09:30 IST)** | Cron `30 9 * * 1-5` | Emails a list of leads still `new` after 20 h; silent when clear | ~22 |
-| **TW-03 · Reports · Weekly lead summary (Mondays 09:00 IST)** | Cron `0 9 * * 1` | Last 7 days: count, by topic, by status, still awaiting reply | ~4 |
+| **TW-02 · Leads · Unanswered enquiry reminder (weekdays 09:30 IST)** | Cron `30 9 * * 1-5` | Read-only review digest of records still `new` (or missing status) after 20 h: self-associated exact-email matches separated from other unreviewed submissions; silent when clear | ~22 |
+| **TW-03 · Reports · Weekly lead summary (Mondays 09:00 IST)** | Cron `0 9 * * 1` | Last 7 days: raw submission counts, exact-email review buckets, recorded statuses and keyword topics | ~4 |
 | **TW-04 · Ops · Website health monitor (hourly)** | Every hour | Checks homepage, privacy, sitemap and the enquiry API; emails only on DOWN / RECOVERED (reminder every 6 h while down) | ~720 |
 | **TW-05 · Leads · AI triage & draft reply (OpenAI)** | Called by TW-01 (hand-off node) | OpenAI (`gpt-5.4-mini-2026-03-17`) summarises the enquiry, picks a service line, urgency and spam risk, and writes a reply saved to **Gmail → Drafts** (never sent); triage saved to the lead and emailed to the team | 1 per enquiry |
-| **TW-06 · Reports · Monthly website & business report (1st, 09:00 IST)** | Cron `0 9 1 * *` | Vercel Web Analytics (visitors, page views, top pages, referrers, countries) + enquiries + proposals/invoices for last month | 1 |
+| **TW-06 · Reports · Monthly website & business report (1st, 09:00 IST)** | Cron `0 9 1 * *` | Vercel analytics with explicit query windows and mismatch warnings + raw submissions/review buckets + recorded proposals/invoices; no inferred conversion rate | 1 |
 | **TW-07 · Deals · Proposal & invoice follow-ups (daily 09:15 IST)** | Cron `15 9 * * *` | Team digest of overdue / soon-due invoices and proposals due a follow-up; client reminders saved as **Gmail drafts** (never sent) | ~30 |
 | **TW-08 · Leads · Inbound lead hub** | Meta webhook (WhatsApp, Instagram, Facebook), Gmail (shipped off), and TW-01 | One Google Sheets CRM for every channel: 5-question qualification, priority, routed team alerts, human hold, replies on the same channel. See `lead-hub/README.md` | 1 per inbound message |
 | **TW-09 · Leads · Follow-up after 24 h, close out after 3 days** | Cron `5 9-20 * * *` | One polite follow-up, then Not Now after 3 days and a team alert | ~360 |
@@ -50,6 +50,29 @@ The JSON files use placeholders — replace them after import (or before, with f
 | `__ERROR_WORKFLOW_ID__` | id of TW-00 |
 | `__AI_TRIAGE_WORKFLOW_ID__` | id of TW-05 |
 | `__OPENAI_CREDENTIAL_ID__`, `__VERCEL_TOKEN_CREDENTIAL_ID__` | credentials above |
+
+## Reporting review and validation
+
+TW-02, TW-03 and TW-06 use the **legacy TW Leads data table**, not the LeadHub Google Sheet. Their source helpers are in `reporting/reports.mjs` and are embedded by `node integrations/n8n/build-core.mjs`. Generated JSON is the import artifact; edit the source helpers before regenerating.
+
+- In the private n8n instance, set `SELF_ASSOCIATED_EMAILS` at the top of the reporting Code node in **each** of TW-02, TW-03 and TW-06 to the same approved list of complete addresses. The repository default is `[]`, which explicitly reports that review is unconfigured. Never commit private addresses, real enquiry payloads, credentials or populated workflow exports
+- Matching trims whitespace and ignores case only. It does not infer from names, shared domains, plus aliases or message content
+- A match means **self-associated / needs review**, not a confirmed test. Unmatched records remain **other / unreviewed**, not verified genuine leads or qualified clients. Review actual intent separately before updating a source status
+- Raw totals include both buckets and count submissions, not unique people. Records/statuses are never changed or deleted by these reports. Missing statuses are explicitly shown as missing and remain eligible for reminders; invalid received times are flagged rather than silently dropped
+- No enquiry/conversion percentage is calculated: the records are not attributed to unique analytics visitors. TW-06 exposes the requested project/team/window and does not claim a production filter that the query does not set. Missing analytics are not zero; inconsistent headline/aggregate totals are flagged
+- The configured 29-day analytics lookback is conservative for the [Hobby one-month reporting window](https://vercel.com/docs/analytics/limits-and-pricing). It is clamped to the previous IST calendar month. Late manual runs cannot spill into the current month; an empty overlap withholds analytics numbers
+- Proposals sent and invoices issued use the monthly window. Open proposals and unpaid/overdue invoices are labelled current/all-time balances with the report's as-of time
+
+Run `npm run test:reporting` before importing. Tests execute the generated Code nodes with synthetic addresses and cover classification, window boundaries, data gaps, analytics contradictions, no-mutation behavior, and reproducible generation. CI includes this suite.
+
+### Safe rollout (requires live n8n access and authorization)
+
+1. Back up the existing three workflows privately; preserve workflow IDs, schedules, recipients, credentials, table IDs and activation state
+2. Apply only the updated Code-node content: TW-02 **Find enquiries awaiting a reply**, TW-03 **Summarise the last 7 days**, and TW-06 **Work out last month (IST)** plus **Compose monthly report**. Configure the same approved exact-email list privately in the three report nodes
+3. Compare the live versions first; do not replace unknown live changes with repository placeholders. Do not import over credential/table IDs or enable duplicate schedules
+4. Verify each report with a code-only preview against a read-only snapshot. Do not run downstream Gmail send nodes or trigger live form submissions as part of this check
+5. Confirm raw record totals are preserved, buckets reconcile, source status counts remain unchanged, self-associated records are labelled for review, and no conversion percentage is claimed. Reconcile analytics from equivalent query windows/filters before using the figures for decisions
+6. Applying this code is separate from merging a repository PR. Until the live Code nodes and private configuration are verified, the production reporting issue remains open. Roll back by restoring the backed-up Code nodes and configuration if validation fails
 
 ## Notes
 

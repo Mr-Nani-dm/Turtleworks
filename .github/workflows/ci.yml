@@ -26,6 +26,9 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Reporting regression tests
+        run: npm run test:reporting
+
       - name: Lint
         run: npm run lint
 
