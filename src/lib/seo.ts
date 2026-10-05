@@ -92,6 +92,21 @@ export function organizationJsonLd() {
     ...(site.email ? { email: site.email } : {}),
     ...(site.legalName ? { legalName: site.legalName } : {}),
     ...(site.location ? { location: { "@type": "Place", name: site.location } } : {}),
+    // Country-level address keeps the profile honest (India-based, online-first)
+    // without publishing a street; set NEXT_PUBLIC_LOCATION to add the city.
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "IN",
+      ...(site.location ? { addressLocality: site.location } : {}),
+    },
+    // We route enquiries to email and WhatsApp, not a public phone line.
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      ...(site.email ? { email: site.email } : {}),
+      areaServed: "IN",
+      availableLanguage: ["en", "hi"],
+    },
     slogan: site.tagline,
     knowsAbout: services.flatMap((s) => s.includes),
     // Mirrors the visible "What we do" section; keep the two in sync via src/data/services.ts.

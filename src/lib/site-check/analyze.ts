@@ -440,6 +440,9 @@ function performanceChecks(html: string, data: PageData): Check[] {
     if (!/src=/i.test(tag)) return false;
     if (/type=["']application\/ld\+json["']/i.test(tag)) return false;
     if (/type=["']module["']/i.test(tag)) return false;
+    // nomodule scripts are the legacy fallback to type="module"; modern
+    // browsers never download or run them, so they don't block rendering.
+    if (/\bnomodule\b/i.test(tag)) return false;
     if (/\b(?:defer|async)\b/i.test(tag)) return false;
     return true;
   });

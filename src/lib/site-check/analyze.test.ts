@@ -256,6 +256,8 @@ test("render-blocking scripts in <head> without defer or async warn", () => {
   assert.equal(status(asyncOk, "render-blocking"), "pass");
   const jsonLdOk = GOOD.replace('<script src="/app.js" defer></script>', '');
   assert.equal(status(jsonLdOk, "render-blocking"), "pass");
+  const noModuleOk = GOOD.replace('<script src="/app.js" defer></script>', '<script src="/legacy.js" nomodule></script>');
+  assert.equal(status(noModuleOk, "render-blocking"), "pass");
 });
 
 test("images without width and height warn about layout shift", () => {

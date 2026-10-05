@@ -47,7 +47,7 @@ export const site = {
   legalName: clean(process.env.NEXT_PUBLIC_LEGAL_NAME),
   location: clean(process.env.NEXT_PUBLIC_LOCATION),
   description:
-    "TurtleWorks builds websites, SEO & GEO, WhatsApp and business automation, dashboards and custom software. We start with your problem and recommend only what fits.",
+    "TurtleWorks builds websites, SEO & GEO, automation, dashboards and custom software — we start with your problem and recommend only what fits.",
 } as const;
 
 export const nav = [
