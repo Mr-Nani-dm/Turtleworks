@@ -26,8 +26,8 @@
   --color-gold: #e0a852;
   /* Solid text tones. Transparent text over a moving film shimmers and its
      contrast drifts frame to frame; these stay put. */
-  --color-ivory-soft: #d6d9d2;
-  --color-ivory-muted: #b4bbb4;
+  --color-ivory-soft: #dee1da;
+  --color-ivory-muted: #c2c8c1;
 
   /* Cinematic depths (hero video fallbacks) */
   --color-abyss: #050908;
@@ -188,7 +188,7 @@
         rgba(29, 91, 70, 0.12),
         transparent 55%
       ),
-      linear-gradient(rgba(5, 9, 8, 0.5), rgba(5, 9, 8, 0.5));
+      linear-gradient(rgba(5, 9, 8, 0.56), rgba(5, 9, 8, 0.56));
   }
   .section-solid::before {
     content: "";
@@ -451,6 +451,68 @@
     .gv-fly,
     .gv-strike {
       transition: none;
+    }
+  }
+
+  /* Service tiles behave like living material: on hover the scene lifts,
+     deepens its shadow and catches a slow sweep of light, and a single gold
+     line draws under the title. The motion is the affordance — no border. */
+  .svc-scene {
+    position: relative;
+    display: block;
+    border-radius: 1rem;
+    transition:
+      transform 0.5s var(--ease-emphasis),
+      box-shadow 0.5s var(--ease-emphasis);
+  }
+  .svc-tile:hover .svc-scene {
+    transform: translateY(-6px);
+    box-shadow: 0 44px 90px -42px rgba(0, 0, 0, 0.9);
+  }
+  .svc-sheen {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .svc-sheen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-120%);
+    background: linear-gradient(
+      105deg,
+      transparent 42%,
+      rgba(255, 255, 255, 0.32) 50%,
+      transparent 58%
+    );
+    transition: transform 0.85s var(--ease-emphasis);
+  }
+  .svc-tile:hover .svc-sheen::before {
+    transform: translateX(120%);
+  }
+  .svc-underline {
+    background-image: linear-gradient(var(--color-gold), var(--color-gold));
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 2px;
+    transition: background-size 0.5s var(--ease-emphasis);
+  }
+  .svc-tile:hover .svc-underline {
+    background-size: 100% 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .svc-scene,
+    .svc-sheen::before,
+    .svc-underline {
+      transition: none;
+    }
+    .svc-tile:hover .svc-scene {
+      transform: none;
+    }
+    .svc-tile:hover .svc-sheen::before {
+      transform: translateX(-120%);
     }
   }
 
