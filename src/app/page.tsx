@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/sections/Hero";
 import { CapabilityIndex } from "@/components/sections/CapabilityIndex";
 import { SelectedWork } from "@/components/sections/SelectedWork";
+import { ClientWork } from "@/components/sections/ClientWork";
 import { ProcessTimeline } from "@/components/sections/ProcessTimeline";
 import { Team } from "@/components/sections/Team";
 import { Faq } from "@/components/sections/Faq";
@@ -21,6 +22,7 @@ export default function Home() {
         <Hero />
         <CapabilityIndex />
         <SelectedWork />
+        <ClientWork />
         <ProcessTimeline />
         <Team />
         <Faq />
