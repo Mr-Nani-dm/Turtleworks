@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>TurtleWorks — Lead & Outreach Dashboard</title>
+<style>
+  :root{
+    --forest:#15382e; --forest-deep:#0f2a22; --gold:#c2a14d; --gold-soft:#e7d9ad;
+    --ivory:#f6f4ee; --card:#ffffff; --ink:#1d2420; --muted:#657067; --line:#e7e3d8;
+    --hot:#b4453a; --warm:#c08a2d; --cold:#5b7183; --yes:#2f7d53; --no:#9aa0a6;
+    --shadow:0 1px 2px rgba(21,56,46,.05),0 8px 24px rgba(21,56,46,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--ivory); color:var(--ink); line-height:1.5;
+    -webkit-font-smoothing:antialiased; font-size:14px;
+  }
+  a{color:inherit}
+  .wrap{max-width:1180px; margin:0 auto; padding:28px 20px 56px}
+  /* header */
+  header.top{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:22px}
+  .brand{display:flex; align-items:center; gap:12px}
+  .mark{width:38px;height:38px;border-radius:10px;background:var(--forest);display:grid;place-items:center;color:var(--gold-soft);font-weight:700;font-size:18px;box-shadow:var(--shadow)}
+  .brand h1{font-size:16px; margin:0; letter-spacing:.2px}
+  .brand p{margin:2px 0 0; color:var(--muted); font-size:12px; letter-spacing:.3px; text-transform:uppercase}
+  .refreshed{text-align:right; font-size:12px; color:var(--muted)}
+  .refreshed b{color:var(--forest); font-weight:600}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--yes);margin-right:6px;vertical-align:middle;box-shadow:0 0 0 3px rgba(47,125,83,.15)}
+  /* kpi */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+  .kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px}
+  .kpi .val{font-size:26px;font-weight:700;color:var(--forest);line-height:1}
+  .kpi .sub{font-size:11px;color:var(--muted);margin-top:6px}
+  .kpi.accent{background:linear-gradient(180deg,#1c4536,var(--forest));border-color:var(--forest)}
+  .kpi.accent .label{color:var(--gold-soft)} .kpi.accent .val{color:#fff} .kpi.accent .sub{color:#cfe0d6}
+  /* sections */
+  section{margin-bottom:26px}
+  .sec-head{display:flex;align-items:center;gap:10px;margin:0 2px 12px}
+  .sec-head h2{font-size:13px;letter-spacing:.5px;text-transform:uppercase;color:var(--forest);margin:0}
+  .sec-head .count{font-size:11px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:20px;padding:2px 9px}
+  .rule{flex:1;height:1px;background:var(--line)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .card .hd{padding:13px 16px;border-bottom:1px solid var(--line);font-weight:600;font-size:12.5px;color:var(--forest);display:flex;justify-content:space-between;align-items:center}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{ text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;padding:9px 16px;background:#fbfaf6;border-bottom:1px solid var(--line)}
+  td{padding:10px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fbfaf5}
+  .id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted)}
+  .name{font-weight:600}
+  .mut{color:var(--muted)}
+  /* pills */
+  .pill{display:inline-block;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.2px;white-space:nowrap}
+  .pill.hot{background:rgba(180,69,58,.12);color:var(--hot)}
+  .pill.warm{background:rgba(192,138,45,.14);color:var(--warm)}
+  .pill.cold{background:rgba(91,113,131,.13);color:var(--cold)}
+  .pill.yes{background:rgba(47,125,83,.13);color:var(--yes)}
+  .pill.no{background:rgba(154,160,166,.16);color:#6b7177}
+  .pill.st{background:var(--forest);color:var(--gold-soft)}
+  .pill.ghost{background:#f0efe8;color:var(--muted)}
+  .due{color:var(--hot);font-weight:600}
+  /* attention */
+  .attn{background:linear-gradient(180deg,#fff,#fdfbf4);border:1px solid var(--gold-soft)}
+  .attn .hd{color:var(--forest);border-bottom-color:var(--gold-soft)}
+  .empty{padding:22px 16px;color:var(--muted);text-align:center;font-size:12.5px}
+  /* log */
+  .log{list-style:none;margin:0;padding:6px 0}
+  .log li{display:flex;gap:12px;padding:8px 16px;border-bottom:1px solid var(--line);font-size:12px}
+  .log li:last-child{border-bottom:none}
+  .log .t{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .log .r{font-weight:600;color:var(--forest)}
+  footer{margin-top:30px;text-align:center;color:var(--muted);font-size:11.5px}
+  .samplebar{background:rgba(194,161,77,.13);border:1px solid var(--gold-soft);color:#7a6324;border-radius:10px;padding:8px 14px;font-size:12px;margin-bottom:18px}
+  @media (max-width:820px){ .kpis{grid-template-columns:repeat(2,1fr)} .grid2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark">T</div>
+      <div>
+        <h1>TurtleWorks — Lead &amp; Outreach</h1>
+        <p>Pipeline dashboard</p>
+      </div>
+    </div>
+    <div class="refreshed">
+      <div><span class="dot"></span><b id="updated">Updated —</b></div>
+      <div>live from CRM · Asia/Kolkata</div>
+    </div>
+  </header>
+
+  <div class="samplebar" id="samplebar">Preview — mix of your 1 real lead and illustrative sample rows so you can see a populated layout. The live version shows only real CRM data.</div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section>
+    <div class="sec-head"><h2>Needs attention today</h2><span class="count" id="attn-count">0</span><div class="rule"></div></div>
+    <div class="card attn">
+      <div class="hd">Due follow-ups, call requests &amp; replies while paused</div>
+      <div id="attn"></div>
+    </div>
+  </section>
+
+  <div class="grid2">
+    <section style="margin:0">
+      <div class="sec-head"><h2>Inbound leads</h2><span class="count" id="leads-count">0</span><div class="rule"></div></div>
+      <div class="card"><div style="overflow-x:auto"><table id="leads"></table></div></div>
+    </section>
+    <section style="margin:0">
+      <div class="sec-head"><h2>Outreach prospects</h2><span class="count" id="pros-count">0</span><div class="rule"></div></div>
+      <div class="card"><div style="overflow-x:auto"><table id="pros"></table></div></div>
+    </section>
+  </div>
+
+  <section style="margin-top:26px">
+    <div class="sec-head"><h2>Recent activity</h2><div class="rule"></div></div>
+    <div class="card"><ul class="log" id="log"></ul></div>
+  </section>
+
+  <footer>
+    TurtleWorks · generated by n8n TW-12 · <span id="foot-ts"></span><br/>
+    Internal — contains lead contact details. Do not share this link.
+  </footer>
+</div>
+
+<script>
+/* ===== DATA (n8n replaces this block in production) ===== */
+const DATA = {
+  generatedAt: new Date().toISOString(),
+  leads: [
+    {id:"WA-20261012-RI6DSD", channel:"WhatsApp", name:"Mr Nani", email:"", status:"Call Requested", priority:"Hot", last:"2026-10-12 19:58", next:"", paused:true, repliedPaused:true},
+    {id:"WA-20261013-A1B2", channel:"WhatsApp", name:"Priya Sharma", email:"priya@clinic.in", status:"Questionnaire Started", priority:"Warm", last:"2026-10-13 10:12", next:"2026-10-14 10:12", paused:false},
+    {id:"IG-20261013-K9F2", channel:"Instagram", name:"Rahul Menon", email:"", status:"Auto Reply Sent", priority:"Cold", last:"2026-10-13 09:40", next:"2026-10-14 09:40", paused:false},
+    {id:"WA-20261011-77QD", channel:"WhatsApp", name:"Anita Rao", email:"anita@studio.co", status:"Replied", priority:"Warm", last:"2026-10-11 18:02", next:"2026-10-13 09:00", paused:false, due:true},
+    {id:"EM-20261010-3MZ1", channel:"Email", name:"Vikram S", email:"vikram@shop.in", status:"Qualified", priority:"Hot", last:"2026-10-10 15:30", next:"", paused:false},
+  ],
+  prospects: [
+    {id:"PR-0007", biz:"Bright Smile Dental", status:"Outreach Sent", reply:"Awaiting", dnc:false, next:"2026-10-15 10:00", last:"2026-10-13 10:00"},
+    {id:"PR-0006", biz:"UrbanNest Interiors", status:"Follow-up 1 Sent", reply:"Awaiting", dnc:false, next:"2026-10-16 10:00", last:"2026-10-13 10:00", due:true},
+    {id:"PR-0005", biz:"GreenLeaf Cafe", status:"Interested", reply:"YES", dnc:false, next:"2026-10-14 11:00", last:"2026-10-12 16:20"},
+    {id:"PR-0004", biz:"Metro Fitness", status:"Not Interested", reply:"NO", dnc:true, next:"", last:"2026-10-12 12:05"},
+    {id:"PR-0003", biz:"Coastal Realty", status:"No Response", reply:"None", dnc:false, next:"", last:"2026-10-09 10:00"},
+  ],
+  log: [
+    {t:"10-13 07:31", id:"WA-20261012-RI6DSD", r:"replied_while_paused", d:"status=Call Requested; Hot"},
+    {t:"10-13 10:12", id:"WA-20261013-A1B2", r:"handled", d:"step=3; Warm; reply queued"},
+    {t:"10-13 10:00", id:"PR-0006", r:"followup_1_sent", d:"WhatsApp template tw_outreach_fu1"},
+    {t:"10-13 09:40", id:"IG-20261013-K9F2", r:"new_lead", d:"status=Auto Reply Sent; Cold"},
+    {t:"10-12 16:20", id:"PR-0005", r:"reply_yes", d:"moved to Interested"},
+    {t:"10-12 12:05", id:"PR-0004", r:"reply_no", d:"Do Not Contact set; removed from follow-ups"},
+  ],
+};
+/* ===== render ===== */
+const $=(s)=>document.querySelector(s);
+const pri=(p)=>`<span class="pill ${(''+p).toLowerCase()}">${p||'—'}</span>`;
+const esc=(s)=>(s==null?'':(''+s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const todayStr=new Date().toISOString().slice(0,10);
+
+function fmt(ts){ const d=new Date(ts); return d.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Kolkata'})+" IST"; }
+
+const L=DATA.leads, P=DATA.prospects;
+const attn=[
+  ...L.filter(x=>x.repliedPaused||x.status==='Call Requested'||(x.next&&x.next.slice(0,10)<=todayStr)).map(x=>({kind:'Lead',id:x.id,who:x.name,why:x.repliedPaused?'Replied while paused':(x.status==='Call Requested'?'Call requested':'Follow-up due'),when:x.next||x.last})),
+  ...P.filter(x=>!x.dnc && x.next && x.next.slice(0,10)<=todayStr).map(x=>({kind:'Prospect',id:x.id,who:x.biz,why:'Follow-up due',when:x.next})),
+];
+
+const kAwait=L.filter(x=>/Auto Reply|Questionnaire|Replied/.test(x.status)).length;
+const kHot=L.filter(x=>x.priority==='Hot').length;
+const kCall=L.filter(x=>x.status==='Call Requested').length;
+const kNew=L.filter(x=>x.last&&x.last.slice(0,10)===todayStr).length;
+const pSent=P.filter(x=>/Outreach Sent|Follow-up/.test(x.status)).length;
+const pYes=P.filter(x=>x.reply==='YES').length;
+const pNo=P.filter(x=>x.dnc||x.reply==='NO').length;
+
+$('#kpis').innerHTML=[
+  {l:'Total leads',v:L.length,s:kNew+' new today'},
+  {l:'Hot leads',v:kHot,s:kCall+' call requested',a:true},
+  {l:'Awaiting reply',v:kAwait,s:'inbound in progress'},
+  {l:'Needs attention',v:attn.length,s:'due today',a:attn.length>0},
+  {l:'Prospects contacted',v:pSent,s:P.length+' total'},
+  {l:'Said YES',v:pYes,s:'interested',a:pYes>0},
+  {l:'Suppressed (NO)',v:pNo,s:'do not contact'},
+  {l:'Conversion signal',v:(pYes+kCall),s:'calls + yes'},
+].map(k=>`<div class="kpi ${k.a?'accent':''}"><div class="label">${k.l}</div><div class="val">${k.v}</div><div class="sub">${k.s}</div></div>`).join('');
+
+$('#attn-count').textContent=attn.length;
+$('#attn').innerHTML= attn.length? `<table><thead><tr><th>Type</th><th>Who</th><th>Why</th><th>When</th><th>Ref</th></tr></thead><tbody>`+
+  attn.map(a=>`<tr><td><span class="pill ghost">${a.kind}</span></td><td class="name">${esc(a.who)}</td><td class="due">${a.why}</td><td class="mut">${esc(a.when||'—')}</td><td class="id">${esc(a.id)}</td></tr>`).join('')+`</tbody></table>`
+  : `<div class="empty">All clear — nothing due right now.</div>`;
+
+$('#leads-count').textContent=L.length;
+$('#leads').innerHTML=`<thead><tr><th>Lead</th><th>Channel</th><th>Status</th><th>Priority</th><th>Next</th></tr></thead><tbody>`+
+  L.map(x=>`<tr><td><div class="name">${esc(x.name)}</div><div class="id">${esc(x.id)}${x.email?' · '+esc(x.email):''}</div></td>
+    <td><span class="pill ghost">${esc(x.channel)}</span></td>
+    <td><span class="pill st">${esc(x.status)}</span></td>
+    <td>${pri(x.priority)}</td>
+    <td class="${x.next&&x.next.slice(0,10)<=todayStr?'due':'mut'}">${esc(x.next||'—')}</td></tr>`).join('')+`</tbody>`;
+
+$('#pros-count').textContent=P.length;
+$('#pros').innerHTML=`<thead><tr><th>Prospect</th><th>Status</th><th>Reply</th><th>Next</th></tr></thead><tbody>`+
+  P.map(x=>`<tr><td><div class="name">${esc(x.biz)}</div><div class="id">${esc(x.id)}</div></td>
+    <td><span class="pill ${x.dnc?'no':'st'}">${esc(x.status)}</span></td>
+    <td>${x.reply==='YES'?'<span class="pill yes">YES</span>':x.reply==='NO'?'<span class="pill no">NO · suppressed</span>':'<span class="mut">'+esc(x.reply)+'</span>'}</td>
+    <td class="${x.next&&x.next.slice(0,10)<=todayStr?'due':'mut'}">${esc(x.next||'—')}</td></tr>`).join('')+`</tbody>`;
+
+$('#log').innerHTML=DATA.log.map(e=>`<li><span class="t">${esc(e.t)}</span><span class="r">${esc(e.r)}</span><span class="mut">${esc(e.id)} — ${esc(e.d)}</span></li>`).join('');
+
+const ts=fmt(DATA.generatedAt);
+$('#updated').textContent='Updated '+ts;
+$('#foot-ts').textContent=ts;
+</script>
+</body>
+</html>

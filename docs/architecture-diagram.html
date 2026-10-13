@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TurtleWorks — Architecture</title>
+<style>
+  :root{--forest:#15382e;--gold:#c2a14d;--gold-soft:#e7d9ad;--ivory:#f6f4ee;--card:#fff;--ink:#1d2420;--muted:#657067;--line:#e7e3d8}
+  *{box-sizing:border-box} body{margin:0;background:var(--ivory);color:var(--ink);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px}
+  .wrap{max-width:1080px;margin:0 auto;padding:30px 20px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .mark{width:40px;height:40px;border-radius:10px;background:var(--forest);display:grid;place-items:center;color:var(--gold-soft);font-weight:700;font-size:19px}
+  h1{font-size:18px;margin:0} .lead{color:var(--muted);margin:2px 0 26px;font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 10px;margin-bottom:20px;box-shadow:0 1px 2px rgba(21,56,46,.05),0 8px 24px rgba(21,56,46,.05)}
+  .card h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--forest);margin:0 0 4px}
+  .card p{color:var(--muted);font-size:12.5px;margin:0 0 10px}
+  .mermaid{display:flex;justify-content:center;overflow-x:auto}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="mark">T</div><div><h1>TurtleWorks — System Architecture</h1></div></header>
+  <p class="lead">Website on Vercel · automations on self-hosted n8n (OVH VPS) · CRM in Google Sheets · live dashboard. How a lead travels through the system.</p>
+
+  <div class="card">
+    <h2>Infrastructure — OVH VPS</h2>
+    <p>Everything runs 24/7 in Docker. Caddy terminates HTTPS for both subdomains.</p>
+    <pre class="mermaid">
+flowchart TB
+  subgraph VPS["OVH VPS 15.204.90.176 · Docker Compose"]
+    Caddy["Caddy 2<br/>auto-HTTPS + proxy"]
+    N8N["n8n<br/>13 workflows"]
+    PG[("Postgres 16")]
+    Caddy --> N8N --> PG
+  end
+  D1["n8n.turtleworks.in"] --> Caddy
+  D2["dashboard.turtleworks.in<br/>Basic Auth"] --> Caddy
+    </pre>
+  </div>
+
+  <div class="card">
+    <h2>Flow 1 — Website enquiry</h2>
+    <p>Form submission is acknowledged in &lt;8s; logging and AI triage finish after.</p>
+    <pre class="mermaid">
+flowchart LR
+  V["Visitor"] --> SITE["turtleworks.in"]
+  SITE -->|POST + secret| T01["TW-01 intake"]
+  T01 --> MAIL["Email team"]
+  T01 --> OK["Confirm to site"]
+  T01 --> LOG["Log lead"]
+  T01 --> T05["TW-05 AI triage"]
+  T05 --> DRAFT["Gmail draft (never sent)"]
+    </pre>
+  </div>
+
+  <div class="card">
+    <h2>Flow 2 — WhatsApp / inbound lead hub</h2>
+    <p>Every channel lands in one CRM. Unique IDs; YES keeps active, NO suppresses.</p>
+    <pre class="mermaid">
+flowchart LR
+  C["Customer"] -->|WhatsApp/IG/FB| META["Meta Cloud API"]
+  META -->|/meta-inbound| T08["TW-08 lead hub"]
+  T08 --> CRM[("Google Sheet CRM")]
+  T08 --> REPLY["Auto-reply"]
+  T08 --> ALERT["Team alert"]
+  T08 -->|prospect reply| T11["TW-11 reply handler"]
+  T09["TW-09 follow-up (cron)"] --> CRM
+  T10["TW-10 outreach (cron)"] -->|templates| META
+  T11 --> CRM
+    </pre>
+  </div>
+
+  <div class="card">
+    <h2>Flow 3 — Dashboard &amp; reports</h2>
+    <p>The dashboard renders live from the CRM on each load.</p>
+    <pre class="mermaid">
+flowchart LR
+  CRM[("Google Sheet CRM")] --> T12["TW-12 dashboard"]
+  T12 -->|Basic Auth| DASH["dashboard.turtleworks.in"]
+  DT[("n8n Data Tables")] --> RPT["TW-02/03/06 reports (cron)"]
+  RPT --> TEAM["Team email digests"]
+  T07["TW-07 deal follow-ups"] --> DR["Gmail drafts"]
+    </pre>
+  </div>
+
+  <footer>TurtleWorks · see docs/architecture.md, n8n-flows.md, operations-runbook.md</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad:true, securityLevel:"loose",
+    theme:"base",
+    themeVariables:{
+      primaryColor:"#ffffff", primaryBorderColor:"#15382e", primaryTextColor:"#1d2420",
+      lineColor:"#8a9a90", fontFamily:"Inter, Arial, sans-serif", fontSize:"13px"
+    }
+  });
+</script>
+</body>
+</html>
